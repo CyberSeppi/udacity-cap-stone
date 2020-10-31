@@ -1,0 +1,45 @@
+{
+  "name": "serverless-photo-gallery",
+  "version": "1.0.0",
+  "description": "Servless photo gallery backend",
+  "main": "handler.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "aws-serverless-express": "^3.3.6",
+    "aws-xray-sdk": "^2.2.0",
+    "express": "^4.17.1",
+    "http-aws-es": "^6.0.0",
+    "jimp": "^0.16.1",
+    "jsonwebtoken": "^8.5.1",
+    "middy": "^0.25.0",
+    "source-map-support": "^0.5.11",
+    "uuid": "^3.3.2",
+    "winston": "^3.2.1",
+    "axios": "^0.19.0",
+    "jwk-to-pem": "^2.0.4"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.28",
+    "@types/elasticsearch": "^5.0.34",
+    "@types/jest": "^24.0.15",
+    "@types/jsonwebtoken": "^8.3.2",
+    "@types/node": "^10.14.12",
+    "aws-sdk": "^2.433.0",
+    "jest": "^24.8.0",
+    "serverless-aws-documentation": "^1.1.0",
+    "serverless-dynamodb-local": "^0.2.39",
+    "serverless-iam-roles-per-function": "^1.0.4",
+    "serverless-offline": "^6.1.4",
+    "serverless-plugin-canary-deployments": "^0.4.7",
+    "serverless-reqvalidator-plugin": "^1.0.3",
+    "serverless-webpack": "^5.3.1",
+    "ts-jest": "^26.4.1",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.4.1",
+    "webpack": "^4.29.6"
+  },
+  "author": "Ivan Mushketyk",
+  "license": "MIT"
+}
