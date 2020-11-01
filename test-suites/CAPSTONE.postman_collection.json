@@ -1,0 +1,1268 @@
+{
+	"info": {
+		"_postman_id": "92a03fa8-5cad-4eb3-815e-7d1ceb173868",
+		"name": "CAPSTONE",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth-Request",
+			"item": [
+				{
+					"name": "GetAlbums",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "86ea9928-57fe-44e4-b151-c391bcf4997a",
+								"exec": [
+									"var auth0Domain = pm.environment.get('auth0_domain');",
+									"var auth0ClientId = pm.environment.get('auth0_client_id');",
+									"var auth0ClientSecret = pm.environment.get('auth0_client_secret');",
+									"var auth0Audience = pm.environment.get('auth0_audience');",
+									"",
+									"const echoPostRequest = {",
+									"  url: 'https://'+auth0Domain+'/oauth/token',",
+									"  method: 'POST',",
+									"  header: 'Content-Type:application/json',",
+									"  body: {",
+									"    mode: 'application/json',",
+									"    raw: JSON.stringify(",
+									"        {",
+									"        \tclient_id: auth0ClientId,",
+									"        \tclient_secret: auth0ClientSecret,",
+									"        \taudience: auth0Audience,",
+									"        \tgrant_type:'client_credentials'",
+									"        }",
+									"    )",
+									"  }",
+									"};",
+									"",
+									"var getToken = true;",
+									"",
+									"if (!pm.collectionVariables.get('accessTokenExpiry') || ",
+									"    !pm.collectionVariables.get('currentAccessToken')) {",
+									"    console.log('Token or expiry date are missing')",
+									"} else if (pm.environment.get('accessTokenExpiry') <= (new Date()).getTime()) {",
+									"    console.log('Token is expired')",
+									"} else {",
+									"    getToken = false;",
+									"    console.log('Token and expiry date are all good');",
+									"}",
+									"",
+									"if (getToken === true) {",
+									"    pm.sendRequest(echoPostRequest, function (err, res) {",
+									"    console.log(err ? err : res.json());",
+									"        if (err === null) {",
+									"            console.log('Saving the token and expiry date')",
+									"            var responseJson = res.json();",
+									"            pm.collectionVariables.set('currentAccessToken', responseJson.access_token)",
+									"    ",
+									"            var expiryDate = new Date();",
+									"            expiryDate.setSeconds(expiryDate.getSeconds() + responseJson.expires_in);",
+									"            pm.collectionVariables.set('accessTokenExpiry', expiryDate.getTime());",
+									"        }",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "1912165f-9cec-4d58-97d4-aa35530b874f",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAlbum",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "77498353-7565-4716-b4f3-1ed26a6a7d1d",
+								"exec": [
+									"console.log(pm.environment.get('runner_albumid'))"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "de16b507-4a0c-4d1b-aa9e-5d1fcaabf9e2",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/5424a5e0-c848-407b-96b4-126d22cdd5c9",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album",
+								"5424a5e0-c848-407b-96b4-126d22cdd5c9"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SaveAlbum",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "f742d613-9b1a-4458-aa35-08e6ede821af",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "9e55cd80-7c3e-43a8-bd70-5c49912d1d5f",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"console.log(jsonData)",
+									"pm.environment.set(\"runner_albumid\", jsonData.item.albumId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"myFirstAlbum\",\n    \"description\":\"Isn't it wonderful\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteAlbum",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "0beaf76f-b3a3-45e0-ade8-1c9a002a0684",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "69969584-c48f-4727-aec1-3981f912db58",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"myFirstAlbum\",\n    \"description\":\"Isn't it wonderful\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/701db7f5-77b6-4ed8-9ac5-d006757d4bff",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album",
+								"701db7f5-77b6-4ed8-9ac5-d006757d4bff"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SavePicture",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "9153fe09-fc69-4d7c-b5e3-f3cfa670f0de",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "45aad75a-c173-45c8-a643-c2ecdc01f2c8",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"myFirstAlbum\",\n    \"description\":\"Isn't it wonderful\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/5424a5e0-c848-407b-96b4-126d22cdd5c9/image",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album",
+								"5424a5e0-c848-407b-96b4-126d22cdd5c9",
+								"image"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeletePicture",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "6a2ca6ca-9045-41d1-b49f-d22ed50fae5d",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "5cdedbea-03b0-4cd3-b9d4-a135a872709d",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"myFirstAlbum\",\n    \"description\":\"Isn't it wonderful\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/5424a5e0-c848-407b-96b4-126d22cdd5c9/image/c15574e4-c804-4003-b195-d9e67ef20bfd",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album",
+								"5424a5e0-c848-407b-96b4-126d22cdd5c9",
+								"image",
+								"c15574e4-c804-4003-b195-d9e67ef20bfd"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "f74e56dd-a049-4b7c-8478-4c8f11b34a7c",
+						"type": "text/javascript",
+						"exec": [
+							"var auth0Domain = pm.environment.get('auth0_domain');",
+							"var auth0ClientId = pm.environment.get('auth0_client_id');",
+							"var auth0ClientSecret = pm.environment.get('auth0_client_secret');",
+							"var auth0Audience = pm.environment.get('auth0_audience');",
+							"",
+							"const echoPostRequest = {",
+							"  url: 'https://'+auth0Domain+'/oauth/token',",
+							"  method: 'POST',",
+							"  header: 'Content-Type:application/json',",
+							"  body: {",
+							"    mode: 'application/json',",
+							"    raw: JSON.stringify(",
+							"        {",
+							"        \tclient_id: auth0ClientId,",
+							"        \tclient_secret: auth0ClientSecret,",
+							"        \taudience: auth0Audience,",
+							"        \tgrant_type:'client_credentials'",
+							"        }",
+							"    )",
+							"  }",
+							"};",
+							"",
+							"var getToken = true;",
+							"",
+							"if (!pm.collectionVariables.get('accessTokenExpiry') || ",
+							"    !pm.collectionVariables.get('currentAccessToken')) {",
+							"    console.log('Token or expiry date are missing')",
+							"} else if (pm.collectionVariables.get('accessTokenExpiry') <= (new Date()).getTime()) {",
+							"    console.log('Token is expired')",
+							"} else {",
+							"    getToken = false;",
+							"    console.log('Token and expiry date are all good');",
+							"}",
+							"",
+							"if (getToken === true) {",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"    console.log(err ? err : res.json());",
+							"        if (err === null) {",
+							"            console.log('Saving the token and expiry date')",
+							"            var responseJson = res.json();",
+							"            pm.collectionVariables.set('currentAccessToken', responseJson.access_token)",
+							"    ",
+							"            var expiryDate = new Date();",
+							"            expiryDate.setSeconds(expiryDate.getSeconds() + responseJson.expires_in);",
+							"            pm.collectionVariables.set('accessTokenExpiry', expiryDate.getTime());",
+							"        }",
+							"    });",
+							"}"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "986dd51b-990b-4079-970d-526a6fd8c256",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Auth-Request Auto-Test",
+			"item": [
+				{
+					"name": "GetAlbums",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "d1457c68-7428-4919-abb4-ab201501b2b8",
+								"exec": [
+									"if(!pm.environment.get('runner_albumid'))",
+									"{",
+									"    throw new Error('albumId not set. Run SaveAlbumfirst')",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "6974c7c6-3537-4c9d-ad77-756310090f56",
+								"exec": [
+									"const albumId = pm.environment.get('runner_albumid')",
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has items array\", () => {",
+									"  pm.expect(jsonData.items).not.to.be.empty",
+									"});",
+									"",
+									"const myAlbum = jsonData.items.find",
+									"      (m => m.albumId === albumId);",
+									"",
+									"pm.test(\"album is found in response\", () => {",
+									"  pm.expect(jsonData.items).not.to.be.empty",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAlbum",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "557937f4-cece-467d-9731-9041c81a5fff",
+								"exec": [
+									"if(!pm.environment.get('runner_albumid'))",
+									"{",
+									"    throw new Error('albumId not set. Run SaveAlbumfirst')",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "0e617148-f8a4-4778-b8bf-16f20c1003a3",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has items array\", () => {",
+									"  pm.expect(jsonData.items).not.to.be.undefined",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/{{runner_albumid}}",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album",
+								"{{runner_albumid}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SaveAlbum",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "3a9b8e99-12b9-437b-b02a-d73bda067bed",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "6923bf48-9b44-4c25-a280-f217531091de",
+								"exec": [
+									"",
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"save item body is present\", () => {",
+									"  pm.expect(jsonData.item).not.to.be.undefined",
+									"});",
+									"",
+									"if(jsonData.item != undefined)",
+									"{",
+									"  pm.environment.set(\"runner_albumid\", jsonData.item.albumId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"myFirstAlbum\",\n    \"description\":\"Isn't it wonderful\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteAlbum",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "080ed6cd-db68-49de-b700-2a3a7658e80b",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "9f79d77d-f52d-4861-b1b1-a8631b62d03b",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"myFirstAlbum\",\n    \"description\":\"Isn't it wonderful\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/701db7f5-77b6-4ed8-9ac5-d006757d4bff",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album",
+								"701db7f5-77b6-4ed8-9ac5-d006757d4bff"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SavePicture",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "3ed40fd6-fc99-4477-aa69-de84057a2a74",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "3e2bacef-2557-4c1c-876f-079bf0dab997",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"SignedUrl is coming back\", () => {",
+									"  pm.expect(jsonData.uploadUrl).not.to.be.undefined",
+									"});",
+									"",
+									"",
+									"",
+									"const getRequest = {",
+									"  url: pm.collectionVariables.get('runner_imageUrl'),",
+									"  method: 'GET',",
+									"  header: {",
+									"    'Content-Type': 'application/json'",
+									"  },",
+									"  body: {",
+									"  }",
+									"};",
+									"",
+									"pm.sendRequest(getRequest, (error, response) => {",
+									"  if(error)",
+									"  {",
+									"      console.log(error.message)",
+									"      return",
+									"  }",
+									"  console.log(response.headers)",
+									"  console.log(response.contentInfo())",
+									"",
+									"",
+									"    const putRequest = {",
+									"        url: jsonData.uploadUrl,",
+									"        method: 'PUT',",
+									"        header: {",
+									"            \"Accept-Encoding\": \"gzip, deflate, br\",",
+									"            \"Content-Type\": \"image/png\"",
+									"        },",
+									"        body: response.dataURI()        ",
+									"    }",
+									"",
+									"    pm.sendRequest(putRequest, (error, response) => {",
+									"        if(error)",
+									"        {",
+									"            console.log(error.message)",
+									"            return",
+									"        }",
+									"",
+									"    pm.test(\"Image Upload successful\", () => {",
+									"            pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    })",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"myFirstAlbum\",\n    \"description\":\"Isn't it wonderful\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/{{runner_albumid}}/image",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album",
+								"{{runner_albumid}}",
+								"image"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeletePicture",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fd1cbb35-d21d-48a3-8300-070c55ff2763",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "8e5ce81f-feac-41f1-8872-e67d36844cd3",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{currentAccessToken}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"myFirstAlbum\",\n    \"description\":\"Isn't it wonderful\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/5424a5e0-c848-407b-96b4-126d22cdd5c9/image/c15574e4-c804-4003-b195-d9e67ef20bfd",
+							"protocol": "https",
+							"host": [
+								"{{awsApiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"album",
+								"5424a5e0-c848-407b-96b4-126d22cdd5c9",
+								"image",
+								"c15574e4-c804-4003-b195-d9e67ef20bfd"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "691aa025-bc5b-4ef0-8e0a-2bc2fb2e2e2e",
+						"type": "text/javascript",
+						"exec": [
+							"var auth0Domain = pm.environment.get('auth0_domain');",
+							"var auth0ClientId = pm.environment.get('auth0_client_id');",
+							"var auth0ClientSecret = pm.environment.get('auth0_client_secret');",
+							"var auth0Audience = pm.environment.get('auth0_audience');",
+							"",
+							"const echoPostRequest = {",
+							"  url: 'https://'+auth0Domain+'/oauth/token',",
+							"  method: 'POST',",
+							"  header: 'Content-Type:application/json',",
+							"  body: {",
+							"    mode: 'application/json',",
+							"    raw: JSON.stringify(",
+							"        {",
+							"        \tclient_id: auth0ClientId,",
+							"        \tclient_secret: auth0ClientSecret,",
+							"        \taudience: auth0Audience,",
+							"        \tgrant_type:'client_credentials'",
+							"        }",
+							"    )",
+							"  }",
+							"};",
+							"",
+							"var getToken = true;",
+							"",
+							"if (!pm.collectionVariables.get('accessTokenExpiry') || ",
+							"    !pm.collectionVariables.get('currentAccessToken')) {",
+							"    console.log('Token or expiry date are missing')",
+							"} else if (pm.collectionVariables.get('accessTokenExpiry') <= (new Date()).getTime()) {",
+							"    console.log('Token is expired')",
+							"} else {",
+							"    getToken = false;",
+							"    console.log('Token and expiry date are all good');",
+							"}",
+							"",
+							"if (getToken === true) {",
+							"    pm.sendRequest(echoPostRequest, function (err, res) {",
+							"    console.log(err ? err : res.json());",
+							"        if (err === null) {",
+							"            console.log('Saving the token and expiry date')",
+							"            var responseJson = res.json();",
+							"            pm.collectionVariables.set('currentAccessToken', responseJson.access_token)",
+							"    ",
+							"            var expiryDate = new Date();",
+							"            expiryDate.setSeconds(expiryDate.getSeconds() + responseJson.expires_in);",
+							"            pm.collectionVariables.set('accessTokenExpiry', expiryDate.getTime());",
+							"        }",
+							"    });",
+							"}"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "93f6c756-c179-4c6c-8ac1-f5a9b5e6dbbf",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "dce9b223-3fa5-4b53-a691-13b06d18a481",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "415f5000-0e4f-4477-9ca9-6e244d898515",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "3ca730bc-1df0-4e3e-a4fa-0a9d03be31b6",
+			"key": "region",
+			"value": ""
+		},
+		{
+			"id": "a9d00f80-20ac-49bf-b624-6dc702178690",
+			"key": "awsApiId",
+			"value": ""
+		},
+		{
+			"id": "8dec02c6-7f02-4337-a328-e8e50663dd7e",
+			"key": "auth0_domain",
+			"value": "",
+			"disabled": true
+		},
+		{
+			"id": "5815b12d-f1e3-4858-aa18-365417114666",
+			"key": "auth0_client_id",
+			"value": "",
+			"disabled": true
+		},
+		{
+			"id": "97ab9dcd-f4b2-48b4-a896-d120f549bf59",
+			"key": "auth0_client_secret",
+			"value": "",
+			"disabled": true
+		},
+		{
+			"id": "15f75347-6e40-4bc8-9e06-4fd0d9c0fadd",
+			"key": "auth0_audience",
+			"value": "",
+			"disabled": true
+		},
+		{
+			"id": "4a6eda8d-0366-42a9-93f1-6321d22dfa53",
+			"key": "accessTokenExpiry",
+			"value": ""
+		},
+		{
+			"id": "78918f08-f8ea-4fa9-a1c2-f00e3e932d3e",
+			"key": "currentAccessToken",
+			"value": ""
+		},
+		{
+			"id": "cea7a3d7-89bd-4853-a144-8d5eb16ef479",
+			"key": "runner_imageUrl",
+			"value": ""
+		}
+	],
+	"protocolProfileBehavior": {}
+}
