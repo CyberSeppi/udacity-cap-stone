@@ -1,12 +1,15 @@
 import * as uuid from "uuid";
 import { Album } from "../model/Album";
 import { AlbumAccess } from "../datalayer/albumAccess";
+import { ImageActivities } from "../businessLayer/imageActivities";
 
 export class AlbumActivities {
   private albumAccess: AlbumAccess;
+  private imageActivities: ImageActivities;
 
   constructor() {
     this.albumAccess = new AlbumAccess();
+    this.imageActivities = new ImageActivities();
   }
 
   async createAlbum(
@@ -29,7 +32,16 @@ export class AlbumActivities {
     console.log(userId);
     console.log(albumId);
 
-    return null;
+    try {
+      const album = await this.albumAccess.getAlbum(userId, albumId);
+
+      if (album) {
+        album.images = await this.imageActivities.getAllImages(userId, albumId);
+      }
+      return album;
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
   async updateAlbum(
