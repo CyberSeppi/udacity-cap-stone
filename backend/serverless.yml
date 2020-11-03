@@ -108,14 +108,18 @@ functions:
           - "xray:PutTelemetryRecords"
         Resource:
           - "*"
-      - Effect: Allow
-        Action:
-          - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}
+      # - Effect: Allow
+      #   Action:
+      #     - dynamodb:Query
+      #   Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}
       - Effect: Allow
         Action:
           - dynamodb:Query
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}/index/${self:provider.environment.TABLE_IMAGES_GLOB_INDEX_ALBUSR}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_ALBUMS}
 
 
 
@@ -163,6 +167,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:DeleteItem
+          - dynamodb:Query
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_ALBUMS}
       - Effect: Allow
         Action:
@@ -176,7 +181,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}/index/${self:provider.environment.TABLE_IMAGES_GLOB_INDEX_ALBUMID}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}/index/${self:provider.environment.TABLE_IMAGES_GLOB_INDEX_ALBUSR}
 
   GenUploadUrl:
     handler: src/lambda/http/requestUploadUrlImage.handler
@@ -305,7 +310,7 @@ resources:
               - AttributeName: userId
                 KeyType: RANGE
             Projection: 
-              ProjectionType: KEYS_ONLY                
+              ProjectionType: ALL                
 
 
     RequestBodyValidator:

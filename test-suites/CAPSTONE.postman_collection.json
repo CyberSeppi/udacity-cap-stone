@@ -933,11 +933,20 @@
 									"  pm.response.to.have.status(200);",
 									"});",
 									"",
+									"pm.test(\"ImageId is coming back\", () => {",
+									"  pm.expect(jsonData.imageId).not.to.be.undefined",
+									"});",
+									"",
 									"pm.test(\"SignedUrl is coming back\", () => {",
 									"  pm.expect(jsonData.uploadUrl).not.to.be.undefined",
 									"});",
 									"",
 									"",
+									"//saving imageId in environment",
+									"if(jsonData.imageId)",
+									"{",
+									"    pm.environment.set('runner_imageId', jsonData.imageId)",
+									"}",
 									"",
 									"const getRequest = {",
 									"  url: pm.collectionVariables.get('runner_imageUrl'),",
@@ -976,7 +985,7 @@
 									"            return",
 									"        }",
 									"",
-									"    pm.test(\"Image Upload successful\", () => {",
+									"    pm.test(\"Image Upload successful?\", () => {",
 									"            pm.response.to.have.status(200);",
 									"    });",
 									"",
@@ -1012,7 +1021,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\":\"myFirstAlbum\",\n    \"description\":\"Isn't it wonderful\"\n}",
+							"raw": "",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1215,52 +1224,52 @@
 	],
 	"variable": [
 		{
-			"id": "3ca730bc-1df0-4e3e-a4fa-0a9d03be31b6",
+			"id": "97c8b5e5-c3c1-480b-9509-19184de722bf",
 			"key": "region",
 			"value": ""
 		},
 		{
-			"id": "a9d00f80-20ac-49bf-b624-6dc702178690",
+			"id": "28be8432-b0b7-43bd-ba04-8a6fbbc14d20",
 			"key": "awsApiId",
 			"value": ""
 		},
 		{
-			"id": "8dec02c6-7f02-4337-a328-e8e50663dd7e",
+			"id": "514f80d8-ecf7-4c49-a304-90e537883622",
 			"key": "auth0_domain",
 			"value": "",
 			"disabled": true
 		},
 		{
-			"id": "5815b12d-f1e3-4858-aa18-365417114666",
+			"id": "a92933d3-0ee7-422a-9a29-0e8008d379de",
 			"key": "auth0_client_id",
 			"value": "",
 			"disabled": true
 		},
 		{
-			"id": "97ab9dcd-f4b2-48b4-a896-d120f549bf59",
+			"id": "f45dcbc1-4dc0-48e9-b5df-53cb1aedddd3",
 			"key": "auth0_client_secret",
 			"value": "",
 			"disabled": true
 		},
 		{
-			"id": "15f75347-6e40-4bc8-9e06-4fd0d9c0fadd",
+			"id": "fdb9d3a5-0e10-4209-9bbc-67713e282587",
 			"key": "auth0_audience",
 			"value": "",
 			"disabled": true
 		},
 		{
-			"id": "4a6eda8d-0366-42a9-93f1-6321d22dfa53",
+			"id": "3ebd1f27-cbec-4fdb-9c46-1b0c6b7c35e7",
 			"key": "accessTokenExpiry",
 			"value": ""
 		},
 		{
-			"id": "78918f08-f8ea-4fa9-a1c2-f00e3e932d3e",
-			"key": "currentAccessToken",
+			"id": "f1de6e3b-55e8-49c8-8a22-b12e1e5de56a",
+			"key": "runner_imageUrl",
 			"value": ""
 		},
 		{
-			"id": "cea7a3d7-89bd-4853-a144-8d5eb16ef479",
-			"key": "runner_imageUrl",
+			"id": "b932699f-e41e-4f89-8278-753f17d3854c",
+			"key": "currentAccessToken",
 			"value": ""
 		}
 	],

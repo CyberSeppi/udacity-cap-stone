@@ -4,6 +4,7 @@ import * as uuid from "uuid";
 
 export class ImageActivities {
   imageAccess: ImageAccess;
+
   bucketName: string;
 
   constructor() {
@@ -14,16 +15,21 @@ export class ImageActivities {
   async createImage(userId: string, albumId: string): Promise<Image> {
     const imageId = uuid.v4();
 
-    const image: Image = {
-      imageId: imageId,
-      createdAt: new Date().toISOString(),
-      url: `https://${this.bucketName}.s3.amazonaws.com/${imageId}`,
-      userId: userId,
-      albumId: albumId,
-      description: "",
-    };
+    try {
+        
+      const image: Image = {
+        imageId: imageId,
+        createdAt: new Date().toISOString(),
+        url: `https://${this.bucketName}.s3.amazonaws.com/${imageId}`,
+        userId: userId,
+        albumId: albumId,
+        description: "",
+      };
+      return this.imageAccess.createImage(image);
 
-    return this.imageAccess.createImage(image);
+    } catch (e) {
+        throw new Error(e.message)
+    }
   }
 
   async getImage(albumId: string, imageId: string): Promise<Image> {

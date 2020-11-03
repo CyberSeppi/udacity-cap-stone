@@ -21,7 +21,10 @@ app.get("/album/:albumId", async (_req, res) => {
     const album = await albumActivities.getAlbum(getUserId(_req), albumId);
 
     res.json({
-      items: album.images,
+      items: album.images.map(a => {
+          delete a.userId
+          return a
+      })
     });
   } catch (e) {
     res.status(500).json({
