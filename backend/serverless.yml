@@ -5,7 +5,7 @@ plugins:
   - serverless-webpack
   - serverless-reqvalidator-plugin
   - serverless-aws-documentation
-  - serverless-plugin-canary-deployments
+  # - serverless-plugin-canary-deployments
   - serverless-iam-roles-per-function
   - serverless-dynamodb-local
   - serverless-offline
@@ -36,21 +36,14 @@ provider:
     IMAGES_S3_BUCKET: ${self:service.name}-gallery-${self:provider.stage}
     THUMBNAILS_S3_BUCKET: ${self:service.name}-gallery-tn-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
+    JWKS_URI: 'https://udagram-jprentl-serverless.eu.auth0.com/.well-known/jwks.json'
+    AUDIENCE: 'https://udagram-jprentl-serverless.eu.auth0.com/api/v2/'
+    TOKEN_ISSUER: 'https://udagram-jprentl-serverless.eu.auth0.com/'
 
 
 
 custom:
   topicName: imagesTopic-${self:provider.stage}
-  serverless-offline:
-    httpPort: 3003
-
-  # dynamodb:
-  #   stages:
-  #     - ${self:provider.stage}
-  #   start:
-  #     port: 8000
-  #     inMemory: true
-  #     migrate: true
 
   documentation:
     api:

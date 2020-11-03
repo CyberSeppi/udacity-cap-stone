@@ -2,7 +2,6 @@ import 'source-map-support/register'
 
 import * as express from 'express'
 import * as awsServerlessExpress from 'aws-serverless-express'
-import {createLogger} from "../../utils/logger";
 import * as AWS from 'aws-sdk';
 import {getUserId} from "../../utils/getUserId";
 import {applyCorsHeader} from "../../utils/corsUtil";
@@ -15,7 +14,6 @@ const app = express()
 const s3 = new AWS.S3({
     signatureVersion: 'v4'
 })
-const logger = createLogger("createImage");
 
 //const imageAccess = new ImageAccess();
 const imageActivities = new ImageActivities()
@@ -27,15 +25,13 @@ applyCorsHeader(app);
 
 app.post('/album/:albumId/image', jsonParser, async (_req, res) => {
     const albumId = _req.params.albumId;    
-    logger.info(`AlbumdId ${albumId}`);
 
 
     const newImage = await imageActivities.createImage(getUserId(_req),albumId)
-    const imageUrl = `https://${bucketName}.s3.amazonaws.com/${newImage.imageId}`
+//    const imageUrl = `https://${bucketName}.s3.amazonaws.com/${newImage.imageId}`
 
     const uploadUrl = getUploadUrl(newImage.imageId);
 
-    logger.info(`Created SignedURL for image URL  ${imageUrl}`);
 
     res.json({
         imageId: newImage.imageId,

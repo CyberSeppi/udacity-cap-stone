@@ -1,13 +1,11 @@
 import * as AWS from "aws-sdk";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
-import { createLogger } from "../utils/logger";
 import { Album } from "../model/Album";
 
 const AWSXRay = require("aws-xray-sdk");
 
 const XAWS = AWSXRay.captureAWS(AWS);
 
-const logger = createLogger("datalayer");
 
 export class AlbumAccess {
   constructor(
@@ -17,7 +15,6 @@ export class AlbumAccess {
   ) {}
 
   async getAlbum(userId: string, albumId: string): Promise<Album> {
-    logger.debug(`Get album for user ${userId} id ${albumId}`);
     try {
       const result = await this.docClient
         .query({
@@ -38,7 +35,6 @@ export class AlbumAccess {
 
       throw new Error(`album ${albumId} not found`);
     } catch (e) {
-      logger.error(`Could not get album ${albumId} `, e);
       throw new Error(e.message);
     }
   }
@@ -49,7 +45,6 @@ export class AlbumAccess {
    * @return list of album for the given userId
    */
   async getAllAlbums(userId: string): Promise<Album[]> {
-    logger.debug(`Get all albums for user ${userId}`);
     try {
       const result = await this.docClient
         .query({
@@ -65,7 +60,6 @@ export class AlbumAccess {
       const items = result.Items;
       return items as Album[];
     } catch (e) {
-      logger.error("Could not get all albums.", e);
     }
   }
 
@@ -74,7 +68,6 @@ export class AlbumAccess {
    * @param album will be created.
    */
   async createAlbum(album: Album): Promise<Album> {
-    logger.debug("createAlbum", album);
     await this.docClient
       .put({
         TableName: this.tableAlbum,
@@ -92,10 +85,9 @@ export class AlbumAccess {
    *
    */
   async deleteAlbum(albumId: string, userId: string) {
-    logger.debug(`Delete (${albumId}`);
 
     try {
-      const deleteRes = await this.docClient
+      await this.docClient
         .delete({
           TableName: this.tableAlbum,
           Key: { userId: userId, albumId: albumId },
@@ -103,7 +95,6 @@ export class AlbumAccess {
         })
         .promise();
 
-      logger.debug(`Delete done ${JSON.stringify(deleteRes)}`);
     } catch (e) {
       throw new Error(e.message);
     }
@@ -112,7 +103,6 @@ export class AlbumAccess {
 
 function createDynamoDBClient() {
   if (process.env.IS_OFFLINE) {
-    logger.debug("Creating a local DynamoDB instance");
     return new AWS.DynamoDB.DocumentClient({
       region: "localhost",
       endpoint: "http://localhost:8000",

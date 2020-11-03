@@ -1,6 +1,5 @@
 import * as AWS from "aws-sdk";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
-import { createLogger } from "../utils/logger";
 import { Image } from "../model/Image";
 // import { getUserAlbumId } from "../utils/getUserAlbumId";
 
@@ -14,14 +13,11 @@ const s3 = new AWS.S3({
   signatureVersion: "v4",
 });
 
-const logger = createLogger("datalayer");
 
 export class ImageAccess {
   private docClient: DocumentClient;
   private tableimage: string;
   private imageIdxAlbUsr: string;
-  private imageIdxImgId: string;
-  private imageIdxAlbId: string;
   /*
     TABLE_IMAGES_GLOB_INDEX_ALBIMG: Images-Glob-Idx-AlbImg-${self:provider.stage}
     TABLE_IMAGES_GLOB_INDEX_IMAGEID: Images-Glob-Idx-Img-${self:provider.stage}
@@ -31,12 +27,7 @@ export class ImageAccess {
   constructor() {
     this.docClient = createDynamoDBClient();
     this.tableimage = process.env.TABLE_IMAGES;
-    this.imageIdxAlbId = process.env.TABLE_IMAGES_GLOB_INDEX_ALBUMID;
-    this.imageIdxImgId = process.env.TABLE_IMAGES_GLOB_INDEX_IMAGEID;
     this.imageIdxAlbUsr = process.env.TABLE_IMAGES_GLOB_INDEX_ALBUSR;
-    console.log(this.imageIdxAlbId);
-    console.log(this.imageIdxAlbUsr);
-    console.log(this.imageIdxImgId);
 
     //private readonly tableImageSecIdx = process.env.TABLE_IMAGES_SEC_INDEX
   }
@@ -46,7 +37,6 @@ export class ImageAccess {
    * @param Image will be created.
    */
   async createImage(image: Image): Promise<Image> {
-    logger.debug("createImage", image);
     await this.docClient
       .put({
         TableName: this.tableimage,
@@ -58,7 +48,6 @@ export class ImageAccess {
   }
 
   async getImage(albumId:string, imageId: string): Promise<Image> {
-    logger.debug(`Get image ${imageId}`);
 
     try {
       const result = await this.docClient
@@ -78,7 +67,6 @@ export class ImageAccess {
         return items[0] as Image;
       }
     } catch (e) {
-      logger.error("Could not get all images.", e);
       throw new Error(e.message);
     }
     return null;
@@ -90,7 +78,6 @@ export class ImageAccess {
    * @param albumId id of album
    */
   async getAllImages(userId: string, albumId: string): Promise<Image[]> {
-    logger.debug(`Get all images for user ${userId} and album ${albumId}`);
     // const key = getUserAlbumId(userId, albumId);
     try {
       const result = await this.docClient
@@ -109,7 +96,6 @@ export class ImageAccess {
       const items = result.Items;
       return items as Image[];
     } catch (e) {
-      logger.error("Could not get all images.", e);
       throw new Error(e.message);
     }
   }
@@ -122,7 +108,7 @@ export class ImageAccess {
    */
   async deleteimage(albumId: string, imageId: string) {
     try {
-      const deleteRes = await this.docClient
+      await this.docClient
         .delete({
           TableName: this.tableimage,
           Key: {
@@ -133,7 +119,6 @@ export class ImageAccess {
         })
         .promise();
 
-      console.log("DELETE TEST", deleteRes);
       await removeFromS3Bucket(imageId);
     } catch (e) {
       throw new Error(e.message);
@@ -143,7 +128,6 @@ export class ImageAccess {
 
 function createDynamoDBClient() {
   if (process.env.IS_OFFLINE) {
-    logger.debug("Creating a local DynamoDB instance");
     return new AWS.DynamoDB.DocumentClient({
       region: "localhost",
       endpoint: "http://localhost:8000",
@@ -154,7 +138,6 @@ function createDynamoDBClient() {
 }
 
 async function removeFromS3Bucket(imageId: string) {
-  logger.debug("Remove from s3", imageId);
   await new Promise((resolve, reject) => {
     s3.deleteObject(
       {
@@ -163,10 +146,8 @@ async function removeFromS3Bucket(imageId: string) {
       },
       (err, data) => {
         if (err) {
-          logger.error(`Could not delete image ${imageId} from S3`);
           return reject(err);
         }
-        logger.debug("Remove from s3 done", imageId);
 
         return resolve(data);
       }
