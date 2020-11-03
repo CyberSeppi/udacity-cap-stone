@@ -22,7 +22,7 @@ export class AlbumAccess {
       const result = await this.docClient
         .query({
           TableName: this.tableAlbum,
-          KeyConditionExpression: "userId = :userIdKey and albumId = :albumId",
+          KeyConditionExpression: "userId = :userId and albumId = :albumId",
           ExpressionAttributeValues: {
             ":userId": userId,
             ":albumId": albumId,
@@ -32,11 +32,13 @@ export class AlbumAccess {
 
       const items = result.Items;
 
-      if (!items[0]) {
+      if (items[0]) {
         return items[0] as Album;
       }
+
+      throw new Error(`album ${albumId} not found`);
     } catch (e) {
-      logger.error("Could not get all albums.", e);
+      logger.error(`Could not get album ${albumId} `, e);
       throw new Error(e.message);
     }
   }
@@ -53,9 +55,9 @@ export class AlbumAccess {
         .query({
           TableName: this.tableAlbum,
           IndexName: this.tableAlbumSecIdx,
-          KeyConditionExpression: "userId = :userIdKey",
+          KeyConditionExpression: "userId = :userId",
           ExpressionAttributeValues: {
-            ":userIdKey": userId,
+            ":userId": userId,
           },
         })
         .promise();
@@ -92,15 +94,19 @@ export class AlbumAccess {
   async deleteAlbum(albumId: string, userId: string) {
     logger.debug(`Delete (${albumId}`);
 
-    const deleteRes = await this.docClient
-      .delete({
-        TableName: this.tableAlbum,
-        Key: { userId: userId, albumId: albumId },
-        ReturnValues: "ALL_OLD",
-      })
-      .promise();
+    try {
+      const deleteRes = await this.docClient
+        .delete({
+          TableName: this.tableAlbum,
+          Key: { userId: userId, albumId: albumId },
+          ReturnValues: "ALL_OLD",
+        })
+        .promise();
 
-    logger.debug("Delete done", deleteRes);
+      logger.debug(`Delete done ${JSON.stringify(deleteRes)}`);
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 }
 
