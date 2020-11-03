@@ -226,7 +226,7 @@
 							"oauth2": [
 								{
 									"key": "accessToken",
-									"value": "{{currentAccessToken}}",
+									"value": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InFZSVh5Uy1GRG5sOERBMGlVOXd0RCJ9.eyJpc3MiOiJodHRwczovL3VkYWdyYW0tanByZW50bC1zZXJ2ZXJsZXNzLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJnaXRodWJ8NTM3ODI4OTYiLCJhdWQiOlsiaHR0cDovL3VkYWNpdHktY2Fwc3RvbmUtYXBpLyIsImh0dHBzOi8vdWRhZ3JhbS1qcHJlbnRsLXNlcnZlcmxlc3MuZXUuYXV0aDAuY29tL3VzZXJpbmZvIl0sImlhdCI6MTYwNDM1MzAzNSwiZXhwIjoxNjA0NDM5NDM1LCJhenAiOiI5SDJRaDNzNzRidVdvNEszRXhQUlJ0WU14eWxZWVo0SSIsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwifQ.GqfeQb4bhA5wxyJkWz1uCKNvHwVGx19jwJ0_4DxYVvr8nyYIpPqb8OCRyGIBJhumOZAgqcnX3UlNYyEMVKrxzH8ocFWtWaCFzNbHovVP-Q1qOuXXx0rB3HCmm8WBjhQCHRznn7ckXx62JkFwYXBI0cZgim4B1236oK4NcqzhyiRxAl845-RNYBNwtmKzJ5nb5liSGlNkYBKYCblrUm0WWdlcaSO3wZY60k63N9bgVTmUyp8PCwOnsTh5OF9hAvz3zOTFdwOnX6AmPJPB5b4i2_Hbt1bXe-AufLtuZliIWql3TJugMcFnJ_1EF6gS0rSFzvZ7IVEJNTmiYR09WFFaNg",
 									"type": "string"
 								},
 								{
@@ -891,7 +891,7 @@
 							}
 						},
 						"url": {
-							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/701db7f5-77b6-4ed8-9ac5-d006757d4bff",
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/{{runner_albumid}}",
 							"protocol": "https",
 							"host": [
 								"{{awsApiId}}",
@@ -903,7 +903,7 @@
 							"path": [
 								"dev",
 								"album",
-								"701db7f5-77b6-4ed8-9ac5-d006757d4bff"
+								"{{runner_albumid}}"
 							]
 						}
 					},
@@ -1107,7 +1107,7 @@
 							}
 						},
 						"url": {
-							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/5424a5e0-c848-407b-96b4-126d22cdd5c9/image/c15574e4-c804-4003-b195-d9e67ef20bfd",
+							"raw": "https://{{awsApiId}}.execute-api.{{region}}.amazonaws.com/dev/album/{{runner_albumid}}/image/{{runner_imageId}}",
 							"protocol": "https",
 							"host": [
 								"{{awsApiId}}",
@@ -1119,9 +1119,9 @@
 							"path": [
 								"dev",
 								"album",
-								"5424a5e0-c848-407b-96b4-126d22cdd5c9",
+								"{{runner_albumid}}",
 								"image",
-								"c15574e4-c804-4003-b195-d9e67ef20bfd"
+								"{{runner_imageId}}"
 							]
 						}
 					},
@@ -1224,51 +1224,51 @@
 	],
 	"variable": [
 		{
-			"id": "97c8b5e5-c3c1-480b-9509-19184de722bf",
+			"id": "ffbf5166-4f9c-4cf3-9538-eafb6f90dee0",
 			"key": "region",
 			"value": ""
 		},
 		{
-			"id": "28be8432-b0b7-43bd-ba04-8a6fbbc14d20",
+			"id": "72017c2b-475d-461a-960d-9a477800a9e9",
 			"key": "awsApiId",
 			"value": ""
 		},
 		{
-			"id": "514f80d8-ecf7-4c49-a304-90e537883622",
+			"id": "6d370299-1fff-4c58-a4fe-8d45d715e4d6",
 			"key": "auth0_domain",
 			"value": "",
 			"disabled": true
 		},
 		{
-			"id": "a92933d3-0ee7-422a-9a29-0e8008d379de",
+			"id": "b26fbb2e-81c4-433b-81f1-d89fcd1b21ff",
 			"key": "auth0_client_id",
 			"value": "",
 			"disabled": true
 		},
 		{
-			"id": "f45dcbc1-4dc0-48e9-b5df-53cb1aedddd3",
+			"id": "97b95ef7-846e-4aad-ac75-dbd99168025f",
 			"key": "auth0_client_secret",
 			"value": "",
 			"disabled": true
 		},
 		{
-			"id": "fdb9d3a5-0e10-4209-9bbc-67713e282587",
+			"id": "3fb51a23-2968-4dfc-9902-c62b26f68e64",
 			"key": "auth0_audience",
 			"value": "",
 			"disabled": true
 		},
 		{
-			"id": "3ebd1f27-cbec-4fdb-9c46-1b0c6b7c35e7",
+			"id": "3959508e-dc03-4338-b7b0-94d80f0c93de",
 			"key": "accessTokenExpiry",
 			"value": ""
 		},
 		{
-			"id": "f1de6e3b-55e8-49c8-8a22-b12e1e5de56a",
+			"id": "21c6f554-a235-41e6-b2a9-00233121131a",
 			"key": "runner_imageUrl",
 			"value": ""
 		},
 		{
-			"id": "b932699f-e41e-4f89-8278-753f17d3854c",
+			"id": "2a805a77-5433-4524-a6b8-5edd14058f29",
 			"key": "currentAccessToken",
 			"value": ""
 		}
