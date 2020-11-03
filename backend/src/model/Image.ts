@@ -1,5 +1,6 @@
 export interface Image {
-    userAlbumId: string
+    userId: string
+    albumId: string
     imageId: string
     createdAt: string
     description?: string

@@ -30,7 +30,9 @@ provider:
     TABLE_ALBUMS: Albums-${self:provider.stage}
     TABLE_ALBUMS_SEC_INDEX: Albums-Sec-Idx-${self:provider.stage}
     TABLE_IMAGES: Images-${self:provider.stage}
-    TABLE_IMAGES_SEC_INDEX: Images-Sec-Idx-${self:provider.stage}
+    TABLE_IMAGES_GLOB_INDEX_ALBUSR: Images-Glob-Idx-AlbUsr-${self:provider.stage}
+    TABLE_IMAGES_GLOB_INDEX_IMAGEID: Images-Glob-Idx-Img-${self:provider.stage}
+    TABLE_IMAGES_GLOB_INDEX_ALBUMID: Images-Glob-Idx-Alb-${self:provider.stage}
     IMAGES_S3_BUCKET: ${self:service.name}-gallery-${self:provider.stage}
     THUMBNAILS_S3_BUCKET: ${self:service.name}-gallery-tn-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
@@ -42,13 +44,13 @@ custom:
   serverless-offline:
     httpPort: 3003
 
-  dynamodb:
-    stages:
-      - ${self:provider.stage}
-    start:
-      port: 8000
-      inMemory: true
-      migrate: true
+  # dynamodb:
+  #   stages:
+  #     - ${self:provider.stage}
+  #   start:
+  #     port: 8000
+  #     inMemory: true
+  #     migrate: true
 
   documentation:
     api:
@@ -99,7 +101,6 @@ functions:
           path: album/{albumId}
           authorizer: Auth
           cors: true
-
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -110,7 +111,11 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}/index/${self:provider.environment.TABLE_IMAGES_SEC_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}/index/${self:provider.environment.TABLE_IMAGES_GLOB_INDEX_ALBUSR}
 
 
 
@@ -171,7 +176,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}/index/${self:provider.environment.TABLE_IMAGES_SEC_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}/index/${self:provider.environment.TABLE_IMAGES_GLOB_INDEX_ALBUMID}
 
   GenUploadUrl:
     handler: src/lambda/http/requestUploadUrlImage.handler
@@ -262,32 +267,46 @@ resources:
             Projection:
               ProjectionType: ALL
 
+
     ImageTable:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: userAlbumId
-            AttributeType: S
           - AttributeName: imageId
             AttributeType: S
-          - AttributeName: createdAt
+          - AttributeName: albumId
+            AttributeType: S
+          - AttributeName: userId
             AttributeType: S
         KeySchema:
-          - AttributeName: userAlbumId
-            KeyType: HASH
           - AttributeName: imageId
+            KeyType: HASH
+          - AttributeName: albumId
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TABLE_IMAGES}
-        LocalSecondaryIndexes:
-          - IndexName: ${self:provider.environment.TABLE_IMAGES_SEC_INDEX}
+        GlobalSecondaryIndexes:
+          - IndexName: ${self:provider.environment.TABLE_IMAGES_GLOB_INDEX_IMAGEID}
             KeySchema:
-              - AttributeName: userAlbumId
+              - AttributeName: imageId
                 KeyType: HASH
-              - AttributeName: createdAt
-                KeyType: RANGE
             Projection:
-              ProjectionType: ALL
+              ProjectionType: KEYS_ONLY
+          - IndexName: ${self:provider.environment.TABLE_IMAGES_GLOB_INDEX_ALBUMID}
+            KeySchema:
+              - AttributeName: albumId
+                KeyType: HASH
+            Projection:
+              ProjectionType: KEYS_ONLY
+          - IndexName: ${self:provider.environment.TABLE_IMAGES_GLOB_INDEX_ALBUSR}
+            KeySchema:
+              - AttributeName: albumId
+                KeyType: HASH
+              - AttributeName: userId
+                KeyType: RANGE
+            Projection: 
+              ProjectionType: KEYS_ONLY                
+
 
     RequestBodyValidator:
       Type: AWS::ApiGateway::RequestValidator

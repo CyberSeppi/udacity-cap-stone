@@ -1,0 +1,13 @@
+title SavePictureWorkflow
+
+Postman->Auth0: gethAuthToken (preRequestScript)
+Auth0->Postman: Token
+note over Postman:save Token in variable
+Postman->Lambda(SavePicture): getSignedUrl
+Lambda(SavePicture)->Postman: signedUrl
+note over Postman: Post-Request Test:\ncheck response,\nsaveUrl in variable
+Postman->Internethost:getPicture over imageUrl (GET) Request
+Internethost->Postman:sendPicture in Postman-Response object
+Postman->S3: send extracted picture from former request to s3
+S3->Postman:status 200
+note over Postman: End Post Request Test
