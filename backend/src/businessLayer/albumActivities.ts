@@ -12,6 +12,10 @@ export class AlbumActivities {
     this.imageAccess = new ImageAccess();
   }
 
+  async getAlbums(userId:string):Promise<Album[]>{
+    return await this.albumAccess.getAllAlbums(userId)
+  }
+
   async createAlbum(
     userId: string,
     name: string,

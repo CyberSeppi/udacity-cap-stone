@@ -1,24 +1,9 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyEvent} from "aws-lambda";
+//APIGatewayProxyResult
 import * as utils from "../auth/utils";
 import * as loggerUtils from "../utils/logger";
 
-export class HandlerResponse implements APIGatewayProxyResult {
-  statusCode: number;
-  _headers?: { [header: string]: string | number | boolean; };
-  _multiValueHeaders?: { [header: string]: (string | number | boolean)[]; };
-  body: string;
-  _isBase64Encoded?: boolean;
 
-  setStatus(code: number): HandlerResponse {
-    this.statusCode = code;
-    return this;
-  }
-
-  setBody(body: any): HandlerResponse {
-    this.body = body;
-    return this;
-  }
-}
 /**
  * Get a user id from an API Gateway event
  * @param event an event from API Gateway

@@ -1,55 +1,66 @@
-import 'source-map-support/register'
-
-import * as express from 'express'
-import * as awsServerlessExpress from 'aws-serverless-express'
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import * as middy from "middy";
+import { cors, warmup } from "middy/middlewares";
+import { ImageActivities } from "../../businessLayer/imageActivities";
+import * as loggerUtils from "../../utils/logger";
+import { getUserId } from "../utils";
 import * as AWS from 'aws-sdk';
-import {getUserId} from "../../utils/getUserId";
-import {applyCorsHeader} from "../../utils/corsUtil";
-import { ImageActivities } from '../../businessLayer/imageActivities';
 
+const imageActivities = new ImageActivities();
+const isWarmingUp = (event) => event.source === "serverless-plugin-warmup";
+const onWarmup = (event) => console.log("I am just warming up", event);
 
-const bodyParser = require('body-parser')
-const jsonParser = bodyParser.json()
-const app = express()
+const bucketName = process.env.IMAGES_S3_BUCKET;
+const urlExpiration: number = +process.env.SIGNED_URL_EXPIRATION;
 const s3 = new AWS.S3({
     signatureVersion: 'v4'
 })
 
-//const imageAccess = new ImageAccess();
-const imageActivities = new ImageActivities()
+export const handler = middy(
+  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
-const bucketName = process.env.IMAGES_S3_BUCKET;
-const urlExpiration: number = +process.env.SIGNED_URL_EXPIRATION;
+    loggerUtils.logInfo('requestUploadUrlImage', 'Processing event', event)
+    
+    const userId: string = getUserId(event);
+    const albumId = event.pathParameters.albumId;
 
-applyCorsHeader(app);
+    try {
+      const newImage = await imageActivities.createImage(userId, albumId);
+      const uploadUrl = getUploadUrl(newImage.imageId);
 
-app.post('/album/:albumId/image', jsonParser, async (_req, res) => {
-    const albumId = _req.params.albumId;    
-
-
-    const newImage = await imageActivities.createImage(getUserId(_req),albumId)
-//    const imageUrl = `https://${bucketName}.s3.amazonaws.com/${newImage.imageId}`
-
-    const uploadUrl = getUploadUrl(newImage.imageId);
-
-
-    res.json({
-        imageId: newImage.imageId,
-        uploadUrl: uploadUrl
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          imageId: newImage.imageId,
+          uploadUrl: uploadUrl,
+        }),
+      };
+    } catch (e) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: e.message,
+        }),
+      };
+    }
+  }
+)
+  .use(
+    cors({
+      credentials: true,
     })
-})
-
-
-const server = awsServerlessExpress.createServer(app)
-exports.handler = (event, context) => {
-    awsServerlessExpress.proxy(server, event, context)
-}
-
+  )
+  .use(
+    warmup({
+      isWarmingUp,
+      onWarmup,
+    })
+  );
 
 function getUploadUrl(imageId: string) {
-    return s3.getSignedUrl('putObject', {
-        Bucket: bucketName,
-        Key: imageId,
-        Expires: urlExpiration
-    })
+  return s3.getSignedUrl("putObject", {
+    Bucket: bucketName,
+    Key: imageId,
+    Expires: urlExpiration,
+  });
 }
