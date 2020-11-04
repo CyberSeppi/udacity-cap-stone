@@ -142,6 +142,7 @@ functions:
           - dynamodb:PutItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_ALBUMS}
 
+
   DeleteAlbum:
     handler: src/lambda/http/deleteAlbum.handler
     events:

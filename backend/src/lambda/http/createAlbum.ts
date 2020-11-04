@@ -1,49 +1,58 @@
-import "source-map-support/register";
-
-import * as express from "express";
-import * as awsServerlessExpress from "aws-serverless-express";
-import { createLogger } from "../../utils/logger";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { CreateAlbumRequest } from "../../requests/CreateAlbumRequest";
-import { getUserId } from "../../utils/getUserId";
-import { applyCorsHeader } from "../../utils/corsUtil";
 import { AlbumActivities } from "../../businessLayer/albumActivities";
-
-const bodyParser = require("body-parser");
-const jsonParser = bodyParser.json();
-const app = express();
-
-const logger = createLogger("createAlbum");
+import * as loggerUtils from "../../utils/logger";
+import * as middy from "middy";
+import { cors } from "middy/middlewares";
+import { warmup } from "middy/middlewares";
+import { getUserId } from "../utils";
 
 const albumActivities = new AlbumActivities();
+const isWarmingUp = (event) => event.source === "serverless-plugin-warmup";
+const onWarmup = (event) => console.log("I am just warming up", event);
 
-applyCorsHeader(app);
+export const handler = middy(
+  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    console.log("Processing event", event);
 
-app.put("/album", jsonParser, async (_req, res) => {
-  const albumRequest: CreateAlbumRequest = _req.body;
+    const albumRequest: CreateAlbumRequest = JSON.parse(event.body);
 
-  logger.info("createAlbum", albumRequest);
+    loggerUtils.logInfo("createAlbum", JSON.stringify(albumRequest));
 
-  const userId: string = getUserId(_req);
+    const userId: string = getUserId(event);
+    loggerUtils.logInfo("createAlbum", "after getUserId", userId);
 
-  try {
-    const newAlbum = await albumActivities.createAlbum(
-      userId,
-      albumRequest.name,
-      albumRequest.description
-    );
-    delete newAlbum.userId;
+    try {
+      const newAlbum = await albumActivities.createAlbum(
+        userId,
+        albumRequest.name,
+        albumRequest.description
+      );
+      delete newAlbum.userId;
 
-    res.status(200).json({
-      item: newAlbum,
-    });
-  } catch (e) {
-    return res.status(500).json({
-      error: "e.message",
-    });
+      loggerUtils.logDebug("Create Album", "returning now");
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          item: newAlbum,
+        }),
+      };
+    } catch (e) {
+      return {
+        statusCode: 500,
+        body: e.message,
+      };
+    }
   }
-});
-
-const server = awsServerlessExpress.createServer(app);
-exports.handler = (event, context) => {
-  awsServerlessExpress.proxy(server, event, context);
-};
+)
+  .use(
+    cors({
+      credentials: true,
+    })
+  )
+  .use(
+    warmup({
+      isWarmingUp,
+      onWarmup,
+    })
+  );

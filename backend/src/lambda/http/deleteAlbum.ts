@@ -1,35 +1,47 @@
-import "source-map-support/register";
-
-import * as express from "express";
-import * as awsServerlessExpress from "aws-serverless-express";
-import { getUserId } from "../../utils/getUserId";
-import { applyCorsHeader } from "../../utils/corsUtil";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import * as middy from "middy";
+import { cors, warmup } from "middy/middlewares";
 import { AlbumActivities } from "../../businessLayer/albumActivities";
-
-const app = express();
+import * as loggerUtils from "../../utils/logger";
+import { getUserId } from "../utils";
 
 const albumActivities = new AlbumActivities();
+const isWarmingUp = (event) => event.source === "serverless-plugin-warmup";
+const onWarmup = (event) => console.log("I am just warming up", event);
 
-applyCorsHeader(app);
+export const handler = middy(
+  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    const userId: string = getUserId(event);
+    loggerUtils.logInfo("createAlbum", "after getUserId", userId);
 
-app.delete("/album/:albumId", async (_req, res) => {
-  const albumId = _req.params.albumId;
+    const albumId = event.pathParameters.albumId;
 
-  const userid = getUserId(_req);
-
-  try {
-    await albumActivities.deleteAlbum(userid, albumId);
-    res.status(200).json({
-      message: `deleted album ${albumId}`,
-    });
-  } catch (e) {
-    res.status(500).json({
-      error: e.message,
-    });
+    try {
+      await albumActivities.deleteAlbum(userId, albumId);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: `album ${albumId} deleted`,
+        }),
+      };
+    } catch (e) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: e.message,
+        }),
+      };
+    }
   }
-});
-
-const server = awsServerlessExpress.createServer(app);
-exports.handler = (event, context) => {
-  awsServerlessExpress.proxy(server, event, context);
-};
+)
+  .use(
+    cors({
+      credentials: true,
+    })
+  )
+  .use(
+    warmup({
+      isWarmingUp,
+      onWarmup,
+    })
+  );

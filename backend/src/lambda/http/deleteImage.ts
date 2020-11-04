@@ -1,32 +1,47 @@
-import 'source-map-support/register'
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import * as middy from "middy";
+import { cors, warmup } from "middy/middlewares";
+import { ImageActivities } from "../../businessLayer/imageActivities";
+import * as loggerUtils from "../../utils/logger";
+import { getUserId } from "../utils";
 
-import * as express from 'express'
-import * as awsServerlessExpress from 'aws-serverless-express'
-//import { ImageAccess } from "../../datalayer/imageAccess";
-import { getUserId } from "../../utils/getUserId";
-import { applyCorsHeader } from "../../utils/corsUtil";
-import { ImageActivities } from '../../businessLayer/imageActivities'
+const imageActivities = new ImageActivities();
+const isWarmingUp = (event) => event.source === "serverless-plugin-warmup";
+const onWarmup = (event) => console.log("I am just warming up", event);
 
-const app = express()
-
-const imageActivities = new ImageActivities()
-
-applyCorsHeader(app);
-
-app.delete('/album/:albumId/image/:imageId', async (_req, res) => {
-    const albumId = _req.params.albumId;
-    const imageId = _req.params.imageId;
+export const handler = middy(
+  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    loggerUtils.logInfo("DeleteImage", `Processing event ${event}`);
+    const albumId = event.pathParameters.albumId;
+    const imageId = event.pathParameters.imageId;
 
     try {
-        await imageActivities.deleteImage(getUserId(_req),albumId, imageId);
-        res.status(200).send('');
-    } catch (ex) {
-        res.status(500).send(ex.message);
+      loggerUtils.logInfo("DeleteImage", `albumId ${albumId} imageId ${imageId}`);
+      await imageActivities.deleteImage(getUserId(_req), albumId, imageId);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: `album ${albumId} deleted`,
+        }),
+      };
+    } catch (e) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: e.message,
+        }),
+      };
     }
-})
-
-
-const server = awsServerlessExpress.createServer(app)
-exports.handler = (event, context) => {
-    awsServerlessExpress.proxy(server, event, context)
-}
+  }
+)
+  .use(
+    cors({
+      credentials: true,
+    })
+  )
+  .use(
+    warmup({
+      isWarmingUp,
+      onWarmup,
+    })
+  );
