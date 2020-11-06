@@ -1,9 +1,10 @@
+import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import * as middy from "middy";
 import { cors, warmup } from "middy/middlewares";
 import { ImageActivities } from "../../businessLayer/imageActivities";
 import * as loggerUtils from "../../utils/logger";
-import { getUserId } from "../utils";
+import { getUserId } from "./utils/utils";
 
 const imageActivities = new ImageActivities();
 const isWarmingUp = (event) => event.source === "serverless-plugin-warmup";

@@ -1,50 +1,19 @@
-import { SNSEvent, SNSHandler, S3EventRecord } from 'aws-lambda'
-import 'source-map-support/register'
-import * as AWS from 'aws-sdk'
-// @ts-ignore
-import Jimp from 'jimp/es'
+import { ImageActivities } from "../../businessLayer/imageActivities";
 
-const s3 = new AWS.S3()
+const imageActivities = new ImageActivities();
 
-const imagesBucketName = process.env.IMAGES_S3_BUCKET;
-const thumbnailBucketName = process.env.THUMBNAILS_S3_BUCKET
+exports.handler = async function (event, context, callback) {
+  console.log("Received event:", JSON.stringify(event, null, 4));
+  console.log("Received event:", JSON.stringify(context, null, 4));
 
-export const handler: SNSHandler = async (event: SNSEvent) => {
-  console.log('Processing SNS event ', JSON.stringify(event))
-  for (const snsRecord of event.Records) {
-    const s3EventStr = snsRecord.Sns.Message
-    console.log('Processing S3 event', s3EventStr)
-    const s3Event = JSON.parse(s3EventStr)
+  const bucket:string = event.Records[0].s3.bucket.name;
+  const object:string = event.Records[0].s3.object.key;
+  
+  //parse object and get rid of path
 
-    for (const record of s3Event.Records) {
-      await processImage(record)
-    }
-  }
-}
+  console.log(`bucket: ${bucket} object: ${object}`);
 
-async function processImage(record: S3EventRecord) {
-  const key = record.s3.object.key
-  console.log('Processing S3 item with key: ', key)
-  const response = await s3
-    .getObject({
-      Bucket: imagesBucketName,
-      Key: key
-    })
-    .promise()
+  await imageActivities.createThumbNailImage(object, bucket);
 
-  const body = response.Body
-  const image = await Jimp.read(body)
-
-  console.log('Resizing image')
-  image.resize(150, Jimp.AUTO)
-  const convertedBuffer = await image.getBufferAsync(Jimp.AUTO)
-
-  console.log(`Writing image back to S3 bucket: ${thumbnailBucketName}`)
-  await s3
-    .putObject({
-      Bucket: thumbnailBucketName,
-      Key: `${key}`,
-      Body: convertedBuffer
-    })
-    .promise()
-}
+  callback(null, "Success");
+};

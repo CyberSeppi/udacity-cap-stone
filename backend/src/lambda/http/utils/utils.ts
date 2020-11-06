@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent} from "aws-lambda";
 //APIGatewayProxyResult
-import * as utils from "../auth/utils";
-import * as loggerUtils from "../utils/logger";
+import * as utils from "../../../auth/utils";
+import * as loggerUtils from "../../../utils/logger";
 
 
 /**

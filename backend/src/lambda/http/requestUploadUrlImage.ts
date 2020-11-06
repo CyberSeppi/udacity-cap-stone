@@ -1,9 +1,10 @@
+import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import * as middy from "middy";
 import { cors, warmup } from "middy/middlewares";
 import { ImageActivities } from "../../businessLayer/imageActivities";
 import * as loggerUtils from "../../utils/logger";
-import { getUserId } from "../utils";
+import { getUserId } from "./utils/utils";
 import * as AWS from 'aws-sdk';
 
 const imageActivities = new ImageActivities();
@@ -60,7 +61,7 @@ export const handler = middy(
 function getUploadUrl(imageId: string) {
   return s3.getSignedUrl("putObject", {
     Bucket: bucketName,
-    Key: imageId,
+    Key: process.env.IMAGES_S3_PATH.concat(imageId),
     Expires: urlExpiration,
   });
 }

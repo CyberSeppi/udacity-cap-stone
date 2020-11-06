@@ -1,5 +1,4 @@
 import { CustomAuthorizerEvent, CustomAuthorizerResult } from 'aws-lambda'
-import 'source-map-support/register'
 import { authenticate } from './lib'
 import * as logUtils from '../../utils/logger'
 

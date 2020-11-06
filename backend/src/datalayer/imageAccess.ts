@@ -1,23 +1,20 @@
 import * as AWS from "aws-sdk";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { Image } from "../model/Image";
-// import { getUserAlbumId } from "../utils/getUserAlbumId";
-
-const bucketName = process.env.IMAGES_S3_BUCKET;
+import path from "path";
 
 const AWSXRay = require("aws-xray-sdk");
-
 const XAWS = AWSXRay.captureAWS(AWS);
-
-const s3 = new AWS.S3({
-  signatureVersion: "v4",
-});
-
 
 export class ImageAccess {
   private docClient: DocumentClient;
   private tableimage: string;
   private imageIdxAlbUsr: string;
+  private s3: AWS.S3;
+  private imagesBucketName: string;
+  private imagesPath: string;
+  private thumbnailPath: string;
+  private signedUrlExpiration: number;
   /*
     TABLE_IMAGES_GLOB_INDEX_ALBIMG: Images-Glob-Idx-AlbImg-${self:provider.stage}
     TABLE_IMAGES_GLOB_INDEX_IMAGEID: Images-Glob-Idx-Img-${self:provider.stage}
@@ -28,10 +25,16 @@ export class ImageAccess {
     this.docClient = createDynamoDBClient();
     this.tableimage = process.env.TABLE_IMAGES;
     this.imageIdxAlbUsr = process.env.TABLE_IMAGES_GLOB_INDEX_ALBUSR;
+    this.imagesBucketName = process.env.IMAGES_S3_BUCKET;
+    this.imagesPath = process.env.IMAGES_S3_PATH;
+    this.thumbnailPath = process.env.THUMBNAIL_S3_PATH;
+    this.signedUrlExpiration = Number(process.env.SIGNED_URL_EXPIRATION);
+    this.s3 = new AWS.S3({
+      signatureVersion: "v4",
+    });
 
     //private readonly tableImageSecIdx = process.env.TABLE_IMAGES_SEC_INDEX
   }
-
   /**
    * Create a new Image.
    * @param Image will be created.
@@ -47,17 +50,16 @@ export class ImageAccess {
     return image;
   }
 
-  async getImage(albumId:string, imageId: string): Promise<Image> {
-
+  async getImage(albumId: string, imageId: string): Promise<Image> {
     try {
       const result = await this.docClient
         .query({
           TableName: this.tableimage,
-        //   IndexName: this.imageIdxImgId,
+          //   IndexName: this.imageIdxImgId,
           KeyConditionExpression: "ImageId = :imageId and albumId = :albumId",
           ExpressionAttributeValues: {
             ":imageId": imageId,
-            ":albumId": albumId
+            ":albumId": albumId,
           },
         })
         .promise();
@@ -119,11 +121,53 @@ export class ImageAccess {
         })
         .promise();
 
-      await removeFromS3Bucket(imageId);
+      await this.removeFromS3Bucket(imageId);
     } catch (e) {
       throw new Error(e.message);
     }
   }
+
+  getUploadUrl(imageId: string) {
+    return this.s3.getSignedUrl("putObject", {
+      Bucket: this.imagesBucketName,
+      Key: path.join(this.imagesPath, imageId).normalize,
+      Expires: this.signedUrlExpiration,
+    });
+  }
+
+  async saveThumbnailToS3(imageId: string, imageBuffer: Buffer) {
+    try {
+      const destparams = {
+        Bucket: this.imagesBucketName,
+        Key: path.join(this.thumbnailPath, imageId.concat("-thumbnail")),
+        Body: imageBuffer,
+        ContentType: "image",
+      };
+
+      await this.s3.putObject(destparams).promise();
+    } catch (e) {
+      throw new Error(e.message);
+    }
+  }
+
+  async removeFromS3Bucket(imageId: string) {
+    await new Promise((resolve, reject) => {
+      this.s3.deleteObject(
+        {
+          Bucket: this.imagesBucketName,
+          Key: path.join(this.imagesPath, imageId),
+        },
+        (err, data) => {
+          if (err) {
+            return reject(err);
+          }
+  
+          return resolve(data);
+        }
+      );
+    });
+  }
+  
 }
 
 function createDynamoDBClient() {
@@ -137,20 +181,3 @@ function createDynamoDBClient() {
   return new XAWS.DynamoDB.DocumentClient();
 }
 
-async function removeFromS3Bucket(imageId: string) {
-  await new Promise((resolve, reject) => {
-    s3.deleteObject(
-      {
-        Bucket: bucketName,
-        Key: imageId,
-      },
-      (err, data) => {
-        if (err) {
-          return reject(err);
-        }
-
-        return resolve(data);
-      }
-    );
-  });
-}

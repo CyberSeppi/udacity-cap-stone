@@ -34,7 +34,8 @@ provider:
     TABLE_IMAGES_GLOB_INDEX_IMAGEID: Images-Glob-Idx-Img-${self:provider.stage}
     TABLE_IMAGES_GLOB_INDEX_ALBUMID: Images-Glob-Idx-Alb-${self:provider.stage}
     IMAGES_S3_BUCKET: ${self:service.name}-gallery-${self:provider.stage}
-    THUMBNAILS_S3_BUCKET: ${self:service.name}-gallery-tn-${self:provider.stage}
+    IMAGES_S3_PATH: 'images/'
+    THUMBNAIL_S3_PATH: 'thumbnails/'
     SIGNED_URL_EXPIRATION: 300
     JWKS_URI: 'https://udagram-jprentl-serverless.eu.auth0.com/.well-known/jwks.json'
     AUDIENCE: 'https://udagram-jprentl-serverless.eu.auth0.com/api/v2/'
@@ -57,6 +58,28 @@ custom:
         schema: ${file(models/create-album-request.json)}
 
 functions:
+
+  ResizeImage:
+    handler: src/lambda/s3/resizeImage.handler
+    events:
+      - s3:
+          bucket: !Ref ImagesBucket
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: ${self:provider.environment.IMAGES_S3_PATH}
+          existing: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - s3:*
+        Resource: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*
+      - Effect: Allow
+        Action:
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
+        Resource:
+          - "*"
+
 
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
