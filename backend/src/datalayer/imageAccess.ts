@@ -153,7 +153,10 @@ export class ImageAccess {
     try {
       const destparams = {
         Bucket: this.imagesBucketName,
-        Key: path.join(this.thumbnailPath, imageId.concat(this.thumbnailSuffix)),
+        Key: path.join(
+          this.thumbnailPath,
+          imageId.concat(this.thumbnailSuffix)
+        ),
         Body: imageBuffer,
         ContentType: "image",
       };
@@ -187,7 +190,10 @@ export class ImageAccess {
       this.s3.deleteObject(
         {
           Bucket: this.imagesBucketName,
-          Key: path.join(this.thumbnailPath, imageId.concat(this.thumbnailSuffix)),
+          Key: path.join(
+            this.thumbnailPath,
+            imageId.concat(this.thumbnailSuffix)
+          ),
         },
         (err, data) => {
           if (err) {
@@ -197,6 +203,18 @@ export class ImageAccess {
           return resolve(data);
         }
       );
+    });
+  }
+
+  /**
+   * 
+   * @param imageId 
+   */
+  getS3UploadUrl(imageId: string): string {
+    return this.s3.getSignedUrl("putObject", {
+      Bucket: this.imagesBucketName,
+      Key: process.env.IMAGES_S3_PATH.concat(imageId),
+      Expires: this.signedUrlExpiration,
     });
   }
 }

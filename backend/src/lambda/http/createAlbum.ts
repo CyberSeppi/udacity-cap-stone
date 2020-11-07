@@ -1,4 +1,4 @@
-import 'source-map-support/register'
+import "source-map-support/register";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { CreateAlbumRequest } from "../../requests/CreateAlbumRequest";
 import { AlbumActivities } from "../../businessLayer/albumActivities";
@@ -6,6 +6,7 @@ import * as middy from "middy";
 import { cors } from "middy/middlewares";
 import { warmup } from "middy/middlewares";
 import { getUserId } from "./utils/utils";
+import { Logger } from "../../utils/myLogger";
 
 const albumActivities = new AlbumActivities();
 const isWarmingUp = (event) => event.source === "serverless-plugin-warmup";
@@ -16,7 +17,7 @@ export const handler = middy(
     console.log("Processing event", event);
 
     const albumRequest: CreateAlbumRequest = JSON.parse(event.body);
-
+    Logger.getInstance().info("Processing event", event);
 
     const userId: string = getUserId(event);
 
@@ -26,6 +27,9 @@ export const handler = middy(
         albumRequest.name,
         albumRequest.description
       );
+
+      Logger.getInstance().debug('newAlbum', newAlbum);
+      
       delete newAlbum.userId;
 
       return {

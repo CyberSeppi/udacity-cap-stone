@@ -1,17 +1,15 @@
 import { ImageActivities } from "../../businessLayer/imageActivities";
+import { Logger } from "../../utils/myLogger";
 
 const imageActivities = new ImageActivities();
 
 exports.handler = async function (event, context, callback) {
-  console.log("Received event:", JSON.stringify(event, null, 4));
-  console.log("Received event:", JSON.stringify(context, null, 4));
+  Logger.getInstance().info("Processing ", event, context);
 
-  const bucket:string = event.Records[0].s3.bucket.name;
-  const object:string = event.Records[0].s3.object.key;
-  
-  //parse object and get rid of path
+  const bucket: string = event.Records[0].s3.bucket.name;
+  const object: string = event.Records[0].s3.object.key;
 
-  console.log(`bucket: ${bucket} object: ${object}`);
+  Logger.getInstance().debug("bucket / object", bucket, object);
 
   await imageActivities.createThumbNailImage(object, bucket);
 

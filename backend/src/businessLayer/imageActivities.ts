@@ -90,4 +90,14 @@ export class ImageActivities {
       throw new Error(e.message);
     }
   }
+
+  getUploadUrl(imageId:string):string
+  {
+    Logger.getInstance().info('getUploadUrl for', imageId);    
+    const uploadUrl = this.imageAccess.getS3UploadUrl(imageId);
+    Logger.getInstance().debug('UploadUrl', uploadUrl);
+    
+    return uploadUrl
+
+  }
 }

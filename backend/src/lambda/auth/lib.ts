@@ -2,6 +2,7 @@
 // THE WHOLE LIB WAS COPIED FROM THERE.
 
 import { extractToken } from '../../auth/utils'
+import { Logger } from "../../utils/myLogger";
 
 
 const jwksClient = require('jwks-rsa');
@@ -38,6 +39,8 @@ const jwtOptions = {
 export async function authenticate(params) {
     const token = getToken(params);
     const decoded = jwt.decode(token, { complete: true });
+    
+    Logger.getInstance().debug('authenticate', token, decoded);
     
     if (!decoded || !decoded.header || !decoded.header.kid) {
         throw new Error('invalid token');

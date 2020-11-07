@@ -4,6 +4,7 @@ import * as middy from "middy";
 import { cors, warmup } from "middy/middlewares";
 import { ImageActivities } from "../../businessLayer/imageActivities";
 import { getUserId } from "./utils/utils";
+import { Logger } from "../../utils/myLogger";
 
 const imageActivities = new ImageActivities();
 const isWarmingUp = (event) => event.source === "serverless-plugin-warmup";
@@ -11,6 +12,7 @@ const onWarmup = (event) => console.log("I am just warming up", event);
 
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    Logger.getInstance().info("Processing event", event);
     const albumId = event.pathParameters.albumId;
     const imageId = event.pathParameters.imageId;
     const userId: string = getUserId(event);
