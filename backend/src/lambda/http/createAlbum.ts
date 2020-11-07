@@ -2,7 +2,6 @@ import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { CreateAlbumRequest } from "../../requests/CreateAlbumRequest";
 import { AlbumActivities } from "../../businessLayer/albumActivities";
-import * as loggerUtils from "../../utils/logger";
 import * as middy from "middy";
 import { cors } from "middy/middlewares";
 import { warmup } from "middy/middlewares";
@@ -18,10 +17,8 @@ export const handler = middy(
 
     const albumRequest: CreateAlbumRequest = JSON.parse(event.body);
 
-    loggerUtils.logInfo("createAlbum", JSON.stringify(albumRequest));
 
     const userId: string = getUserId(event);
-    loggerUtils.logInfo("createAlbum", "after getUserId", userId);
 
     try {
       const newAlbum = await albumActivities.createAlbum(
@@ -31,7 +28,6 @@ export const handler = middy(
       );
       delete newAlbum.userId;
 
-      loggerUtils.logDebug("Create Album", "returning now");
       return {
         statusCode: 200,
         body: JSON.stringify({

@@ -2,6 +2,7 @@ import * as uuid from "uuid";
 import { Album } from "../model/Album";
 import { AlbumAccess } from "../datalayer/albumAccess";
 import { ImageAccess } from "../datalayer/imageAccess";
+import { Logger } from '../utils/myLogger'
 
 export class AlbumActivities {
   private albumAccess: AlbumAccess;
@@ -13,6 +14,7 @@ export class AlbumActivities {
   }
 
   async getAlbums(userId:string):Promise<Album[]>{
+    Logger.getInstance().info('UserId: ', userId)
     return await this.albumAccess.getAllAlbums(userId)
   }
 
@@ -21,6 +23,7 @@ export class AlbumActivities {
     name: string,
     description: string
   ): Promise<Album> {
+    Logger.getInstance().info('createAlbum: ', userId, name, description)
     const newAlbum: Album = {
       albumId: uuid.v4(),
       createdAt: new Date().toISOString(),
@@ -33,6 +36,7 @@ export class AlbumActivities {
   }
 
   async getAlbum(userId: string, albumId: string): Promise<Album> {
+    Logger.getInstance().info('getAlbum: ', userId, albumId)
 
     try {
       const album = await this.albumAccess.getAlbum(userId, albumId);
@@ -51,15 +55,17 @@ export class AlbumActivities {
     name: string,
     description: string
   ): Promise<Album> {
-    console.log(userId);
-    console.log(albumId);
-    console.log(name);
-    console.log(description);
+    Logger.getInstance().info(userId)
+    Logger.getInstance().info(albumId);
+    Logger.getInstance().info(name);
+    Logger.getInstance().info(description);
+
 //TODO
     return null;
   }
 
   async deleteAlbum(userId: string, albumId: string) {
+    Logger.getInstance().info('deleteAlbum: ', userId, albumId)
 
     try {
       //see, if the album is existing. If not error is thrown in datalayer
@@ -67,12 +73,15 @@ export class AlbumActivities {
 
       await this.albumAccess.deleteAlbum(albumToBeDeleted.albumId, albumToBeDeleted.userId);
 
+      Logger.getInstance().info('delete Album done',);
+      
       //deleting images
 
       for (let index = 0; index < albumToBeDeleted.images.length; index++) {
         const image = albumToBeDeleted.images[index]
         await this.imageAccess.deleteimage(image.albumId, image.imageId)
       }
+      Logger.getInstance().info('delete Pictures done of album', albumId);
 
     } catch (e) {
       throw new Error(e.message);

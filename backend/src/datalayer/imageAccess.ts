@@ -2,6 +2,7 @@ import * as AWS from "aws-sdk";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { Image } from "../model/Image";
 import path from "path";
+import { Logger } from "../utils/myLogger";
 
 const AWSXRay = require("aws-xray-sdk");
 const XAWS = AWSXRay.captureAWS(AWS);
@@ -15,6 +16,8 @@ export class ImageAccess {
   private imagesPath: string;
   private thumbnailPath: string;
   private signedUrlExpiration: number;
+  private readonly thumbnailSuffix = "-thumbnail";
+
   /*
     TABLE_IMAGES_GLOB_INDEX_ALBIMG: Images-Glob-Idx-AlbImg-${self:provider.stage}
     TABLE_IMAGES_GLOB_INDEX_IMAGEID: Images-Glob-Idx-Img-${self:provider.stage}
@@ -40,29 +43,32 @@ export class ImageAccess {
    * @param Image will be created.
    */
   async createImage(image: Image): Promise<Image> {
-    await this.docClient
-      .put({
-        TableName: this.tableimage,
-        Item: image,
-      })
-      .promise();
+    const params = {
+      TableName: this.tableimage,
+      Item: image,
+    };
+    Logger.getInstance().debug("Put with params", params);
+
+    await this.docClient.put(params).promise();
 
     return image;
   }
 
   async getImage(albumId: string, imageId: string): Promise<Image> {
     try {
-      const result = await this.docClient
-        .query({
-          TableName: this.tableimage,
-          //   IndexName: this.imageIdxImgId,
-          KeyConditionExpression: "ImageId = :imageId and albumId = :albumId",
-          ExpressionAttributeValues: {
-            ":imageId": imageId,
-            ":albumId": albumId,
-          },
-        })
-        .promise();
+      const params = {
+        TableName: this.tableimage,
+        //   IndexName: this.imageIdxImgId,
+        KeyConditionExpression: "ImageId = :imageId and albumId = :albumId",
+        ExpressionAttributeValues: {
+          ":imageId": imageId,
+          ":albumId": albumId,
+        },
+      };
+
+      Logger.getInstance().debug("getImage params", params);
+
+      const result = await this.docClient.query(params).promise();
 
       const items = result.Items;
       if (items[0]) {
@@ -82,18 +88,20 @@ export class ImageAccess {
   async getAllImages(userId: string, albumId: string): Promise<Image[]> {
     // const key = getUserAlbumId(userId, albumId);
     try {
-      const result = await this.docClient
-        .query({
-          TableName: this.tableimage,
-          IndexName: this.imageIdxAlbUsr,
-          // IndexName: this.tableImageSecIdx,
-          KeyConditionExpression: "userId = :userId and albumId = :albumId",
-          ExpressionAttributeValues: {
-            ":userId": userId,
-            ":albumId": albumId,
-          },
-        })
-        .promise();
+      const params = {
+        TableName: this.tableimage,
+        IndexName: this.imageIdxAlbUsr,
+        // IndexName: this.tableImageSecIdx,
+        KeyConditionExpression: "userId = :userId and albumId = :albumId",
+        ExpressionAttributeValues: {
+          ":userId": userId,
+          ":albumId": albumId,
+        },
+      };
+
+      Logger.getInstance().debug("getAllImages params", params);
+
+      const result = await this.docClient.query(params).promise();
 
       const items = result.Items;
       return items as Image[];
@@ -110,16 +118,18 @@ export class ImageAccess {
    */
   async deleteimage(albumId: string, imageId: string) {
     try {
-      await this.docClient
-        .delete({
-          TableName: this.tableimage,
-          Key: {
-            imageId: imageId,
-            albumId: albumId,
-          },
-          ReturnValues: "ALL_OLD",
-        })
-        .promise();
+      const params = {
+        TableName: this.tableimage,
+        Key: {
+          imageId: imageId,
+          albumId: albumId,
+        },
+        ReturnValues: "ALL_OLD",
+      };
+
+      Logger.getInstance().debug("delete Image Params", params);
+
+      await this.docClient.delete(params).promise();
 
       await this.removeFromS3Bucket(imageId);
     } catch (e) {
@@ -128,21 +138,27 @@ export class ImageAccess {
   }
 
   getUploadUrl(imageId: string) {
-    return this.s3.getSignedUrl("putObject", {
+    const signedUrl = this.s3.getSignedUrl("putObject", {
       Bucket: this.imagesBucketName,
       Key: path.join(this.imagesPath, imageId).normalize,
       Expires: this.signedUrlExpiration,
     });
+
+    Logger.getInstance().debug("signedUrl", signedUrl);
+
+    return signedUrl;
   }
 
   async saveThumbnailToS3(imageId: string, imageBuffer: Buffer) {
     try {
       const destparams = {
         Bucket: this.imagesBucketName,
-        Key: path.join(this.thumbnailPath, imageId.concat("-thumbnail")),
+        Key: path.join(this.thumbnailPath, imageId.concat(this.thumbnailSuffix)),
         Body: imageBuffer,
         ContentType: "image",
       };
+
+      Logger.getInstance().debug("saveThumnail params s3", destparams);
 
       await this.s3.putObject(destparams).promise();
     } catch (e) {
@@ -161,13 +177,28 @@ export class ImageAccess {
           if (err) {
             return reject(err);
           }
-  
+
+          return resolve(data);
+        }
+      );
+    });
+
+    await new Promise((resolve, reject) => {
+      this.s3.deleteObject(
+        {
+          Bucket: this.imagesBucketName,
+          Key: path.join(this.thumbnailPath, imageId.concat(this.thumbnailSuffix)),
+        },
+        (err, data) => {
+          if (err) {
+            return reject(err);
+          }
+
           return resolve(data);
         }
       );
     });
   }
-  
 }
 
 function createDynamoDBClient() {
@@ -180,4 +211,3 @@ function createDynamoDBClient() {
 
   return new XAWS.DynamoDB.DocumentClient();
 }
-

@@ -1,7 +1,6 @@
 import { APIGatewayProxyEvent} from "aws-lambda";
 //APIGatewayProxyResult
 import * as utils from "../../../auth/utils";
-import * as loggerUtils from "../../../utils/logger";
 
 
 /**
@@ -13,13 +12,10 @@ import * as loggerUtils from "../../../utils/logger";
 export function getUserId(event: APIGatewayProxyEvent): string {
   let userName: string = "dummy-User";
 
-  loggerUtils.logDebug("GetUserId", `begin`)
   if (event.headers && event.headers.Authorization) {
-    loggerUtils.logDebug("GetUserId", `ready to extract username. headers are there`)
     userName = utils.parseUserId(
       utils.extractToken(event.headers.Authorization)      
     );
-    loggerUtils.logDebug("GetUserId", `username is ${userName}`)
 
   }
 

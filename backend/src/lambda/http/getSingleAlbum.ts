@@ -3,7 +3,6 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import * as middy from "middy";
 import { cors, warmup } from "middy/middlewares";
 import { AlbumActivities } from "../../businessLayer/albumActivities";
-import * as loggerUtils from "../../utils/logger";
 import { getUserId } from "./utils/utils";
 
 const albumActivities = new AlbumActivities();
@@ -15,10 +14,6 @@ export const handler = middy(
     const userId: string = getUserId(event);
     const albumId = event.pathParameters.albumId;
 
-    loggerUtils.logInfo(
-      "GetSingleAlbum",
-      `userId: ${userId} / albumId: ${albumId}`
-    );
 
     try {
       const album = await albumActivities.getAlbum(userId, albumId);

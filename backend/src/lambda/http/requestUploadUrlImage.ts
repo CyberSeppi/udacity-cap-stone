@@ -3,7 +3,6 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import * as middy from "middy";
 import { cors, warmup } from "middy/middlewares";
 import { ImageActivities } from "../../businessLayer/imageActivities";
-import * as loggerUtils from "../../utils/logger";
 import { getUserId } from "./utils/utils";
 import * as AWS from 'aws-sdk';
 
@@ -20,7 +19,6 @@ const s3 = new AWS.S3({
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
-    loggerUtils.logInfo('requestUploadUrlImage', 'Processing event', event)
     
     const userId: string = getUserId(event);
     const albumId = event.pathParameters.albumId;

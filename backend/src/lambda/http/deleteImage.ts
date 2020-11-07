@@ -3,7 +3,6 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import * as middy from "middy";
 import { cors, warmup } from "middy/middlewares";
 import { ImageActivities } from "../../businessLayer/imageActivities";
-import * as loggerUtils from "../../utils/logger";
 import { getUserId } from "./utils/utils";
 
 const imageActivities = new ImageActivities();
@@ -12,13 +11,11 @@ const onWarmup = (event) => console.log("I am just warming up", event);
 
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    loggerUtils.logInfo("DeleteImage", `Processing event ${event}`);
     const albumId = event.pathParameters.albumId;
     const imageId = event.pathParameters.imageId;
     const userId: string = getUserId(event);
 
     try {
-      loggerUtils.logInfo("DeleteImage", `albumId ${albumId} imageId ${imageId}`);
       await imageActivities.deleteImage(userId, albumId, imageId);
       return {
         statusCode: 200,

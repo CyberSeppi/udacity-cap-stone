@@ -1,11 +1,11 @@
 import * as AWS from "aws-sdk";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { Album } from "../model/Album";
+import { Logger } from "../utils/myLogger";
 
 const AWSXRay = require("aws-xray-sdk");
 
 const XAWS = AWSXRay.captureAWS(AWS);
-
 
 export class AlbumAccess {
   constructor(
@@ -15,17 +15,21 @@ export class AlbumAccess {
   ) {}
 
   async getAlbum(userId: string, albumId: string): Promise<Album> {
+    Logger.getInstance().info("Get Album", userId, albumId);
+
     try {
-      const result = await this.docClient
-        .query({
-          TableName: this.tableAlbum,
-          KeyConditionExpression: "userId = :userId and albumId = :albumId",
-          ExpressionAttributeValues: {
-            ":userId": userId,
-            ":albumId": albumId,
-          },
-        })
-        .promise();
+      const queryParams = {
+        TableName: this.tableAlbum,
+        KeyConditionExpression: "userId = :userId and albumId = :albumId",
+        ExpressionAttributeValues: {
+          ":userId": userId,
+          ":albumId": albumId,
+        },
+      };
+
+      Logger.getInstance().debug("Querying", queryParams);
+
+      const result = await this.docClient.query(queryParams).promise();
 
       const items = result.Items;
 
@@ -46,21 +50,22 @@ export class AlbumAccess {
    */
   async getAllAlbums(userId: string): Promise<Album[]> {
     try {
-      const result = await this.docClient
-        .query({
-          TableName: this.tableAlbum,
-          IndexName: this.tableAlbumSecIdx,
-          KeyConditionExpression: "userId = :userId",
-          ExpressionAttributeValues: {
-            ":userId": userId,
-          },
-        })
-        .promise();
+      const queryParams = {
+        TableName: this.tableAlbum,
+        IndexName: this.tableAlbumSecIdx,
+        KeyConditionExpression: "userId = :userId",
+        ExpressionAttributeValues: {
+          ":userId": userId,
+        },
+      };
+
+      Logger.getInstance().debug("Querying", queryParams);
+
+      const result = await this.docClient.query(queryParams).promise();
 
       const items = result.Items;
       return items as Album[];
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   /**
@@ -68,11 +73,15 @@ export class AlbumAccess {
    * @param album will be created.
    */
   async createAlbum(album: Album): Promise<Album> {
+    const params = {
+      TableName: this.tableAlbum,
+      Item: album,
+    };
+
+    Logger.getInstance().debug('Put params', params);
+    
     await this.docClient
-      .put({
-        TableName: this.tableAlbum,
-        Item: album,
-      })
+      .put(params)
       .promise();
 
     return album;
@@ -85,20 +94,23 @@ export class AlbumAccess {
    *
    */
   async deleteAlbum(albumId: string, userId: string) {
-
     try {
-      await this.docClient
-        .delete({
-          TableName: this.tableAlbum,
-          Key: { userId: userId, albumId: albumId },
-          ReturnValues: "ALL_OLD",
-        })
-        .promise();
+      const params = {
+        TableName: this.tableAlbum,
+        Key: { userId: userId, albumId: albumId },
+        ReturnValues: "ALL_OLD",
+      };
 
+      Logger.getInstance().debug('Delete Params', params);
+      
+      await this.docClient
+        .delete(params)
+        .promise();
     } catch (e) {
       throw new Error(e.message);
     }
   }
+
 }
 
 function createDynamoDBClient() {
