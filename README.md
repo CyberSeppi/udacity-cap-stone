@@ -179,4 +179,5 @@ UI (obviously :-), but only after finishing the UI nanodegree)
 UpdateAlbum function
 
 
-P.S This should show some diagrams. Made it with https://stackedit.io/ but somehow the markdown isn working here :-(
+**P.S**
+ This should show some diagrams. Made it with https://stackedit.io/ but somehow the markdown isn working here :-(
