@@ -8,9 +8,13 @@
     "noUnusedParameters": true,
     "sourceMap": true,
     "target": "es2017",
-    "outDir": "lib"
+    "outDir": "lib",
+    "allowSyntheticDefaultImports": true
   },
   "exclude": [
     "node_modules"
-  ]
+  ],
+  "typingOptions": {
+    "enableAutoDiscovery": true
+  }
 }

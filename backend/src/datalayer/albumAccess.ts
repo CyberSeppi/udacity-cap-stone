@@ -1,13 +1,11 @@
 import * as AWS from "aws-sdk";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
-import { createLogger } from "../utils/logger";
 import { Album } from "../model/Album";
+import { Logger } from "../utils/myLogger";
 
 const AWSXRay = require("aws-xray-sdk");
 
 const XAWS = AWSXRay.captureAWS(AWS);
-
-const logger = createLogger("datalayer");
 
 export class AlbumAccess {
   constructor(
@@ -17,18 +15,21 @@ export class AlbumAccess {
   ) {}
 
   async getAlbum(userId: string, albumId: string): Promise<Album> {
-    logger.debug(`Get album for user ${userId} id ${albumId}`);
+    Logger.getInstance().info("Get Album", userId, albumId);
+
     try {
-      const result = await this.docClient
-        .query({
-          TableName: this.tableAlbum,
-          KeyConditionExpression: "userId = :userId and albumId = :albumId",
-          ExpressionAttributeValues: {
-            ":userId": userId,
-            ":albumId": albumId,
-          },
-        })
-        .promise();
+      const queryParams = {
+        TableName: this.tableAlbum,
+        KeyConditionExpression: "userId = :userId and albumId = :albumId",
+        ExpressionAttributeValues: {
+          ":userId": userId,
+          ":albumId": albumId,
+        },
+      };
+
+      Logger.getInstance().debug("Querying", queryParams);
+
+      const result = await this.docClient.query(queryParams).promise();
 
       const items = result.Items;
 
@@ -38,7 +39,6 @@ export class AlbumAccess {
 
       throw new Error(`album ${albumId} not found`);
     } catch (e) {
-      logger.error(`Could not get album ${albumId} `, e);
       throw new Error(e.message);
     }
   }
@@ -49,24 +49,23 @@ export class AlbumAccess {
    * @return list of album for the given userId
    */
   async getAllAlbums(userId: string): Promise<Album[]> {
-    logger.debug(`Get all albums for user ${userId}`);
     try {
-      const result = await this.docClient
-        .query({
-          TableName: this.tableAlbum,
-          IndexName: this.tableAlbumSecIdx,
-          KeyConditionExpression: "userId = :userId",
-          ExpressionAttributeValues: {
-            ":userId": userId,
-          },
-        })
-        .promise();
+      const queryParams = {
+        TableName: this.tableAlbum,
+        IndexName: this.tableAlbumSecIdx,
+        KeyConditionExpression: "userId = :userId",
+        ExpressionAttributeValues: {
+          ":userId": userId,
+        },
+      };
+
+      Logger.getInstance().debug("Querying", queryParams);
+
+      const result = await this.docClient.query(queryParams).promise();
 
       const items = result.Items;
       return items as Album[];
-    } catch (e) {
-      logger.error("Could not get all albums.", e);
-    }
+    } catch (e) {}
   }
 
   /**
@@ -74,12 +73,15 @@ export class AlbumAccess {
    * @param album will be created.
    */
   async createAlbum(album: Album): Promise<Album> {
-    logger.debug("createAlbum", album);
+    const params = {
+      TableName: this.tableAlbum,
+      Item: album,
+    };
+
+    Logger.getInstance().debug('Put params', params);
+    
     await this.docClient
-      .put({
-        TableName: this.tableAlbum,
-        Item: album,
-      })
+      .put(params)
       .promise();
 
     return album;
@@ -92,27 +94,27 @@ export class AlbumAccess {
    *
    */
   async deleteAlbum(albumId: string, userId: string) {
-    logger.debug(`Delete (${albumId}`);
-
     try {
-      const deleteRes = await this.docClient
-        .delete({
-          TableName: this.tableAlbum,
-          Key: { userId: userId, albumId: albumId },
-          ReturnValues: "ALL_OLD",
-        })
-        .promise();
+      const params = {
+        TableName: this.tableAlbum,
+        Key: { userId: userId, albumId: albumId },
+        ReturnValues: "ALL_OLD",
+      };
 
-      logger.debug(`Delete done ${JSON.stringify(deleteRes)}`);
+      Logger.getInstance().debug('Delete Params', params);
+      
+      await this.docClient
+        .delete(params)
+        .promise();
     } catch (e) {
       throw new Error(e.message);
     }
   }
+
 }
 
 function createDynamoDBClient() {
   if (process.env.IS_OFFLINE) {
-    logger.debug("Creating a local DynamoDB instance");
     return new AWS.DynamoDB.DocumentClient({
       region: "localhost",
       endpoint: "http://localhost:8000",

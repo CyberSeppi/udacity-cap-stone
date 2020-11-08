@@ -1,59 +1,56 @@
 import 'source-map-support/register'
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import * as middy from "middy";
+import { cors, warmup } from "middy/middlewares";
+import { ImageActivities } from "../../businessLayer/imageActivities";
+import { getUserId } from "./utils/utils";
+import { Logger } from "../../utils/myLogger";
 
-import * as express from 'express'
-import * as awsServerlessExpress from 'aws-serverless-express'
-import {createLogger} from "../../utils/logger";
-import * as AWS from 'aws-sdk';
-import {getUserId} from "../../utils/getUserId";
-import {applyCorsHeader} from "../../utils/corsUtil";
-import { ImageActivities } from '../../businessLayer/imageActivities';
-
-
-const bodyParser = require('body-parser')
-const jsonParser = bodyParser.json()
-const app = express()
-const s3 = new AWS.S3({
-    signatureVersion: 'v4'
-})
-const logger = createLogger("createImage");
-
-//const imageAccess = new ImageAccess();
-const imageActivities = new ImageActivities()
-
-const bucketName = process.env.IMAGES_S3_BUCKET;
-const urlExpiration: number = +process.env.SIGNED_URL_EXPIRATION;
-
-applyCorsHeader(app);
-
-app.post('/album/:albumId/image', jsonParser, async (_req, res) => {
-    const albumId = _req.params.albumId;    
-    logger.info(`AlbumdId ${albumId}`);
+const imageActivities = new ImageActivities();
+const isWarmingUp = (event) => event.source === "serverless-plugin-warmup";
+const onWarmup = (event) => console.log("I am just warming up", event);
 
 
-    const newImage = await imageActivities.createImage(getUserId(_req),albumId)
-    const imageUrl = `https://${bucketName}.s3.amazonaws.com/${newImage.imageId}`
+export const handler = middy(
+  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    Logger.getInstance().info("Processing event", event);
 
-    const uploadUrl = getUploadUrl(newImage.imageId);
+    
+    const userId: string = getUserId(event);
+    const albumId = event.pathParameters.albumId;
 
-    logger.info(`Created SignedURL for image URL  ${imageUrl}`);
+    try {
+      const newImage = await imageActivities.createImage(userId, albumId);
+      const uploadUrl = imageActivities.getUploadUrl(newImage.imageId);
+      Logger.getInstance().debug('lamda - uploadUrl', uploadUrl);
+      
 
-    res.json({
-        imageId: newImage.imageId,
-        uploadUrl: uploadUrl
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          imageId: newImage.imageId,
+          uploadUrl: uploadUrl,
+        }),
+      };
+    } catch (e) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: e.message,
+        }),
+      };
+    }
+  }
+)
+  .use(
+    cors({
+      credentials: true,
     })
-})
-
-
-const server = awsServerlessExpress.createServer(app)
-exports.handler = (event, context) => {
-    awsServerlessExpress.proxy(server, event, context)
-}
-
-
-function getUploadUrl(imageId: string) {
-    return s3.getSignedUrl('putObject', {
-        Bucket: bucketName,
-        Key: imageId,
-        Expires: urlExpiration
+  )
+  .use(
+    warmup({
+      isWarmingUp,
+      onWarmup,
     })
-}
+  );
+

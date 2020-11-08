@@ -2,7 +2,7 @@ import * as uuid from "uuid";
 import { Album } from "../model/Album";
 import { AlbumAccess } from "../datalayer/albumAccess";
 import { ImageAccess } from "../datalayer/imageAccess";
-import { createLogger } from "../utils/logger";
+import { Logger } from '../utils/myLogger'
 
 export class AlbumActivities {
   private albumAccess: AlbumAccess;
@@ -13,11 +13,17 @@ export class AlbumActivities {
     this.imageAccess = new ImageAccess();
   }
 
+  async getAlbums(userId:string):Promise<Album[]>{
+    Logger.getInstance().info('UserId: ', userId)
+    return await this.albumAccess.getAllAlbums(userId)
+  }
+
   async createAlbum(
     userId: string,
     name: string,
     description: string
   ): Promise<Album> {
+    Logger.getInstance().info('createAlbum: ', userId, name, description)
     const newAlbum: Album = {
       albumId: uuid.v4(),
       createdAt: new Date().toISOString(),
@@ -30,12 +36,10 @@ export class AlbumActivities {
   }
 
   async getAlbum(userId: string, albumId: string): Promise<Album> {
-    const logger = createLogger("AlbumActivities");
-    logger.info("getAlbum", userId, albumId);
+    Logger.getInstance().info('getAlbum: ', userId, albumId)
 
     try {
       const album = await this.albumAccess.getAlbum(userId, albumId);
-      logger.debug(`Album ${album} retrieved`);
       if (album) {
         album.images = await this.imageAccess.getAllImages(userId, albumId);
       }
@@ -51,35 +55,33 @@ export class AlbumActivities {
     name: string,
     description: string
   ): Promise<Album> {
-    console.log(userId);
-    console.log(albumId);
-    console.log(name);
-    console.log(description);
+    Logger.getInstance().info(userId)
+    Logger.getInstance().info(albumId);
+    Logger.getInstance().info(name);
+    Logger.getInstance().info(description);
 
+//TODO
     return null;
   }
 
   async deleteAlbum(userId: string, albumId: string) {
-    console.log(userId);
-    console.log(albumId);
+    Logger.getInstance().info('deleteAlbum: ', userId, albumId)
 
-    const logger = createLogger('Delete Album')
     try {
       //see, if the album is existing. If not error is thrown in datalayer
       const albumToBeDeleted = await this.getAlbum(userId, albumId);
 
-      logger.debug(`deleting album ${albumId}`)
       await this.albumAccess.deleteAlbum(albumToBeDeleted.albumId, albumToBeDeleted.userId);
-      logger.debug(`deleted album ${albumId}`)
 
+      Logger.getInstance().info('delete Album done',);
+      
       //deleting images
 
       for (let index = 0; index < albumToBeDeleted.images.length; index++) {
         const image = albumToBeDeleted.images[index]
-        logger.debug(`deleting picture ${image.imageId}`)
         await this.imageAccess.deleteimage(image.albumId, image.imageId)
-        logger.debug(`deleted picture ${image.imageId}`)
       }
+      Logger.getInstance().info('delete Pictures done of album', albumId);
 
     } catch (e) {
       throw new Error(e.message);

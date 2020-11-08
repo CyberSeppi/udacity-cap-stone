@@ -1,35 +1,48 @@
 import 'source-map-support/register'
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import * as middy from "middy";
+import { cors, warmup } from "middy/middlewares";
+import { ImageActivities } from "../../businessLayer/imageActivities";
+import { getUserId } from "./utils/utils";
+import { Logger } from "../../utils/myLogger";
 
-import * as express from 'express'
-import * as awsServerlessExpress from 'aws-serverless-express'
-import { createLogger } from "../../utils/logger";
-//import { ImageAccess } from "../../datalayer/imageAccess";
-import { getUserId } from "../../utils/getUserId";
-import { applyCorsHeader } from "../../utils/corsUtil";
-import { ImageActivities } from '../../businessLayer/imageActivities'
+const imageActivities = new ImageActivities();
+const isWarmingUp = (event) => event.source === "serverless-plugin-warmup";
+const onWarmup = (event) => console.log("I am just warming up", event);
 
-const app = express()
-
-const logger = createLogger("deleteAlbum");
-const imageActivities = new ImageActivities()
-
-applyCorsHeader(app);
-
-app.delete('/album/:albumId/image/:imageId', async (_req, res) => {
-    const albumId = _req.params.albumId;
-    const imageId = _req.params.imageId;
-    logger.info(`AlbumdId ${albumId}, imageId ${imageId}`);
+export const handler = middy(
+  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    Logger.getInstance().info("Processing event", event);
+    const albumId = event.pathParameters.albumId;
+    const imageId = event.pathParameters.imageId;
+    const userId: string = getUserId(event);
 
     try {
-        await imageActivities.deleteImage(getUserId(_req),albumId, imageId);
-        res.status(200).send('');
-    } catch (ex) {
-        res.status(500).send(ex.message);
+      await imageActivities.deleteImage(userId, albumId, imageId);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: `album ${albumId} deleted`,
+        }),
+      };
+    } catch (e) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: e.message,
+        }),
+      };
     }
-})
-
-
-const server = awsServerlessExpress.createServer(app)
-exports.handler = (event, context) => {
-    awsServerlessExpress.proxy(server, event, context)
-}
+  }
+)
+  .use(
+    cors({
+      credentials: true,
+    })
+  )
+  .use(
+    warmup({
+      isWarmingUp,
+      onWarmup,
+    })
+  );
