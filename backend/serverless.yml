@@ -5,12 +5,10 @@ plugins:
   - serverless-webpack
   - serverless-reqvalidator-plugin
   - serverless-aws-documentation
-  # - serverless-plugin-canary-deployments
   - serverless-iam-roles-per-function
   - serverless-dynamodb-local
   - serverless-offline
 
-#Uncomment to enable individual packaging
 package:
   individually: true
 
@@ -124,10 +122,6 @@ functions:
           - "xray:PutTelemetryRecords"
         Resource:
           - "*"
-      # - Effect: Allow
-      #   Action:
-      #     - dynamodb:Query
-      #   Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_IMAGES}
       - Effect: Allow
         Action:
           - dynamodb:Query
